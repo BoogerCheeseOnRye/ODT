@@ -196,7 +196,13 @@
                     <div class="panel-tab" onclick="switchPanel('files')">📂 Files</div>
                     <div class="panel-tab" onclick="switchPanel('preview')">▶️ View</div>
                 </div>
-                <div class="chat-header">Chat</div>
+                <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>Chat</span>
+                <select id="chat-mode" style="background: #0d1117; border: 1px solid #30363d; color: #58a6ff; padding: 4px 6px; border-radius: 3px; font-size: 10px; cursor: pointer;">
+                    <option value="plan">Plan First</option>
+                    <option value="direct">Direct Mode</option>
+                </select>
+            </div>
                 <div class="chat-responses" id="chat-responses"></div>
                 <div class="chat-input-area">
                     <textarea id="chat-input" placeholder="Ask anything... (Ctrl+Enter)"></textarea>
@@ -773,10 +779,28 @@
             document.getElementById('optimizeModal').classList.remove('active');
         }
 
+        // Chat modes
+        const PLANNING_PROMPT = `You are a strategic planner. Break down the user's request into:
+1. ANALYSIS: What is being asked?
+2. APPROACH: What's the best strategy?
+3. STEPS: What are the key steps to accomplish this?
+4. RISKS: What could go wrong?
+
+Provide a clear, structured plan. Keep it concise.`;
+
+        const EXECUTION_PROMPT = `You are a solution expert. For the user's request:
+1. Provide the solution directly
+2. Include code/examples if needed
+3. Explain the approach briefly
+
+Be practical and actionable.`;
+
         // Send chat
         async function sendChat() {
             const input = document.getElementById('chat-input');
             const msg = input.value.trim();
+            const mode = document.getElementById('chat-mode')?.value || 'plan';
+            
             if (!msg) return;
             if (chatActive) {
                 addResponse('System', 'Already waiting for response...');
@@ -788,28 +812,72 @@
             chatActive = true;
 
             try {
-                addResponse('System', `Querying ${MODEL}...`);
-                
-                const response = await fetch(PROXY_API, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: MODEL,
-                        prompt: msg,
-                        stream: false
-                    })
-                });
+                if (mode === 'plan') {
+                    // Two-stage: planning then execution
+                    addResponse('System', '📋 Planning phase...');
+                    
+                    const planResponse = await fetch(PROXY_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: MODEL,
+                            prompt: PLANNING_PROMPT + '\n\nUser request: ' + msg,
+                            stream: false
+                        })
+                    });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
+                    if (!planResponse.ok) throw new Error(`HTTP ${planResponse.status}`);
+                    const planData = await planResponse.json();
 
-                const data = await response.json();
+                    if (planData.response) {
+                        addResponse('Planner', planData.response.trim());
+                    }
 
-                if (data.response) {
-                    addResponse('Qwen', data.response.trim());
+                    // Now execute
+                    addResponse('System', '⚡ Execution phase...');
+                    const execResponse = await fetch(PROXY_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: MODEL,
+                            prompt: EXECUTION_PROMPT + '\n\nOriginal request: ' + msg + '\n\nPlanning: ' + (planData.response || ''),
+                            stream: false
+                        })
+                    });
+
+                    if (!execResponse.ok) throw new Error(`HTTP ${execResponse.status}`);
+                    const execData = await execResponse.json();
+
+                    if (execData.response) {
+                        addResponse('Executor', execData.response.trim());
+                    } else {
+                        addResponse('Error', 'No response from executor');
+                    }
                 } else {
-                    addResponse('Error', 'No response from model');
+                    // Direct mode - single response
+                    addResponse('System', `Querying ${MODEL}...`);
+                    
+                    const response = await fetch(PROXY_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            model: MODEL,
+                            prompt: EXECUTION_PROMPT + '\n\nUser request: ' + msg,
+                            stream: false
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (data.response) {
+                        addResponse('Qwen', data.response.trim());
+                    } else {
+                        addResponse('Error', 'No response from model');
+                    }
                 }
                 
                 saveChatHistory();
