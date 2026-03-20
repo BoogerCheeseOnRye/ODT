@@ -114,6 +114,156 @@
         ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
 
+        /* Code Editor Panel */
+        .editor-panel { 
+            position: fixed; 
+            left: -400px; 
+            top: 40px; 
+            width: 400px; 
+            height: calc(100vh - 40px); 
+            background: #161b22; 
+            border-right: 1px solid #30363d; 
+            z-index: 500; 
+            display: flex; 
+            flex-direction: column; 
+            transition: left 0.3s ease;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.5);
+        }
+        
+        .editor-panel.open { left: 0; }
+        
+        .editor-tabs {
+            display: flex;
+            background: #0d1117;
+            border-bottom: 1px solid #30363d;
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+        
+        .editor-tab {
+            padding: 8px 12px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-bottom: none;
+            color: #8b949e;
+            cursor: pointer;
+            font-size: 11px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        
+        .editor-tab.active {
+            background: #0d1117;
+            color: #58a6ff;
+            border-bottom: 2px solid #58a6ff;
+        }
+        
+        .editor-tab:hover {
+            background: #1f2937;
+        }
+        
+        .editor-tab-close {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 0;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .editor-tab-close:hover {
+            color: #f87171;
+        }
+        
+        .editor-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .editor-header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            font-size: 11px;
+            color: #8b949e;
+        }
+        
+        .editor-code {
+            flex: 1;
+            overflow: auto;
+            padding: 12px;
+            background: #0d1117;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #c9d1d9;
+            line-height: 1.6;
+            border: none;
+            outline: none;
+            resize: none;
+        }
+        
+        .editor-code:focus {
+            outline: 1px solid #58a6ff;
+        }
+        
+        .editor-buttons {
+            display: flex;
+            gap: 6px;
+            padding: 8px 12px;
+            background: #161b22;
+            border-top: 1px solid #30363d;
+            flex-shrink: 0;
+        }
+        
+        .editor-buttons button {
+            flex: 1;
+            min-height: 32px;
+            font-size: 10px;
+        }
+        
+        .editor-toggle {
+            position: fixed;
+            left: 10px;
+            bottom: 20px;
+            width: 40px;
+            height: 40px;
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 5px;
+            cursor: pointer;
+            color: #58a6ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 400;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+        
+        .editor-toggle:hover {
+            background: #374151;
+            border-color: #4b5563;
+        }
+
+        @media (max-width: 768px) {
+            .editor-panel { width: 100%; left: -100%; }
+            .editor-toggle { bottom: 60px; }
+        }
+
         /* Tablet/Mobile Breakpoints */
         @media (max-width: 1024px) {
             .header h1 { font-size: 12px; }
@@ -227,6 +377,21 @@
             </div>
         </div>
     </div>
+
+    <!-- Code Editor Panel -->
+    <div class="editor-panel" id="editorPanel">
+        <div class="editor-tabs" id="editorTabs"></div>
+        <div class="editor-header">
+            <span id="editorFileName">No file open</span>
+            <span id="editorStatus"></span>
+        </div>
+        <textarea class="editor-code" id="editorCode" placeholder="Select a file to edit..."></textarea>
+        <div class="editor-buttons">
+            <button class="model-btn" style="background: #3b82f6; border-color: #1d4ed8; color: #fff;" onclick="saveEditorFile()">💾 Save</button>
+            <button class="model-btn" onclick="closeEditor()">Close</button>
+        </div>
+    </div>
+    <button class="editor-toggle" id="editorToggle" onclick="toggleEditor()" title="Open/Close Editor">📝</button>
 
     <!-- Models Modal -->
     <div id="modelsModal" class="modal">
@@ -971,6 +1136,116 @@ Be practical and actionable.`;
                     document.getElementById('proxy-status').classList.add('offline');
                 });
         }
+
+
+        // Code Editor Management
+        let openFiles = [];
+        let currentEditorFile = null;
+
+        function openFileInEditor(file) {
+            // Check if file is already open
+            const existing = openFiles.find(f => f.path === file.path);
+            if (existing) {
+                switchEditorTab(file.path);
+                return;
+            }
+
+            // Add new file
+            const fileData = {
+                name: file.name,
+                path: file.path,
+                type: file.name.split('.').pop(),
+                content: generatePreviewContent(file, file.name.split('.').pop()),
+                originalContent: generatePreviewContent(file, file.name.split('.').pop()),
+                modified: false
+            };
+
+            openFiles.push(fileData);
+            currentEditorFile = fileData;
+            renderEditorTabs();
+            updateEditorDisplay();
+            toggleEditor();
+        }
+
+        function switchEditorTab(filePath) {
+            currentEditorFile = openFiles.find(f => f.path === filePath);
+            renderEditorTabs();
+            updateEditorDisplay();
+        }
+
+        function closeEditorTab(filePath) {
+            openFiles = openFiles.filter(f => f.path !== filePath);
+            if (currentEditorFile?.path === filePath) {
+                currentEditorFile = openFiles[0] || null;
+            }
+            if (openFiles.length === 0) {
+                closeEditor();
+            } else {
+                renderEditorTabs();
+                updateEditorDisplay();
+            }
+        }
+
+        function renderEditorTabs() {
+            const tabsContainer = document.getElementById('editorTabs');
+            tabsContainer.innerHTML = openFiles.map(file => `
+                <div class="editor-tab ${currentEditorFile?.path === file.path ? 'active' : ''}" onclick="switchEditorTab('${file.path}')">
+                    <span>${file.name}${file.modified ? ' •' : ''}</span>
+                    <button class="editor-tab-close" onclick="closeEditorTab('${file.path}'); event.stopPropagation();">×</button>
+                </div>
+            `).join('');
+        }
+
+        function updateEditorDisplay() {
+            const codeArea = document.getElementById('editorCode');
+            const fileName = document.getElementById('editorFileName');
+            
+            if (currentEditorFile) {
+                codeArea.value = currentEditorFile.content;
+                fileName.textContent = currentEditorFile.path;
+                codeArea.disabled = false;
+            } else {
+                codeArea.value = '';
+                fileName.textContent = 'No file open';
+                codeArea.disabled = true;
+            }
+        }
+
+        function toggleEditor() {
+            const panel = document.getElementById('editorPanel');
+            panel.classList.toggle('open');
+        }
+
+        function closeEditor() {
+            const panel = document.getElementById('editorPanel');
+            panel.classList.remove('open');
+        }
+
+        function saveEditorFile() {
+            if (!currentEditorFile) return;
+
+            const codeArea = document.getElementById('editorCode');
+            currentEditorFile.content = codeArea.value;
+            currentEditorFile.modified = false;
+            
+            const status = document.getElementById('editorStatus');
+            status.textContent = '✓ Saved';
+            status.style.color = '#34d399';
+            
+            addResponse('System', `Saved: ${currentEditorFile.name}`);
+            
+            renderEditorTabs();
+            setTimeout(() => { status.textContent = ''; }, 2000);
+        }
+
+        // Hook into existing selectFile to open editor
+        const oldSelectFile = selectFile;
+        selectFile = function(file) {
+            oldSelectFile.call(this, file);
+            if (file.type === 'file') {
+                openFileInEditor(file);
+            }
+        };
 
         // Start
         init();
