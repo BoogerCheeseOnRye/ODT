@@ -22,6 +22,76 @@
         .header-btn:hover { background: #374151; border-color: #4b5563; color: #f3f4f6; }
         .header-btn:active { background: #111827; border-color: #1f2937; }
         
+        
+        /* Header stats display */
+        .header-stats-container {
+            display: none;
+            flex: 0 0 auto;
+            gap: 8px;
+            align-items: center;
+            margin-left: 12px;
+            padding-left: 12px;
+            border-left: 1px solid #30363d;
+        }
+        
+        .header-stats-container.visible {
+            display: flex;
+        }
+        
+        .header-stats-box {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 3px;
+            padding: 4px 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            color: #58a6ff;
+            white-space: nowrap;
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        .header-stats-label {
+            font-size: 9px;
+            color: #6b7280;
+            font-weight: 600;
+        }
+        
+        .header-stats-value {
+            font-size: 11px;
+            color: #58a6ff;
+            font-weight: 600;
+            display: block;
+        }
+        
+        .stats-toggle-btn {
+            background: #1f2937;
+            border: 1px solid #374151;
+            color: #e5e7eb;
+            padding: 6px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            min-height: 32px;
+            min-width: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .stats-toggle-btn:hover {
+            background: #374151;
+            border-color: #4b5563;
+        }
+        
+        .stats-toggle-btn.active {
+            background: #3b82f6;
+            border-color: #1d4ed8;
+            color: #fff;
+        }
+
         .header-status { display: flex; gap: 8px; font-size: 11px; margin-left: auto; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399; animation: pulse 2s infinite; }
         .status-dot.offline { background: #f87171; animation: none; }
@@ -124,7 +194,7 @@
             width: 100vw;
             height: 100vh;
         }
-        .preview-stats { position: fixed; top: 10px; left: 10px; font-family: 'Courier New', monospace; font-size: 11px; color: #58a6ff; line-height: 1.5; z-index: 100; pointer-events: none; white-space: nowrap; font-weight: 600; letter-spacing: 0.5px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); }
+        
         
         .right-panel { flex: 0 0 300px; background: #0d1117; border-left: 1px solid #30363d; display: flex; flex-direction: column; min-width: 0; }
         .right-panel.hidden { display: none; }
@@ -404,6 +474,25 @@
                 <span>Proxy</span>
                 <span class="status-dot" id="proxy-status"></span>
             </div>
+            <div class="header-stats-container" id="header-stats-container">
+                <div class="header-stats-box">
+                    <div class="header-stats-label">FPS</div>
+                    <div class="header-stats-value" id="header-fps">0</div>
+                </div>
+                <div class="header-stats-box">
+                    <div class="header-stats-label">Render</div>
+                    <div class="header-stats-value" id="header-render">0ms</div>
+                </div>
+                <div class="header-stats-box">
+                    <div class="header-stats-label">Objects</div>
+                    <div class="header-stats-value" id="header-objects">0</div>
+                </div>
+                <div class="header-stats-box">
+                    <div class="header-stats-label">Memory</div>
+                    <div class="header-stats-value" id="header-memory">0MB</div>
+                </div>
+            </div>
+            <button class="stats-toggle-btn" id="statsToggleBtn" onclick="toggleStatsDisplay()" title="Toggle stats">📊</button>
         </div>
 
         <div class="content">
@@ -624,6 +713,14 @@
             checkStatus();
             loadChatHistory();
             init3D();
+            
+            // Initialize stats display
+            const container = document.getElementById('header-stats-container');
+            const btn = document.getElementById('statsToggleBtn');
+            if (showStats) {
+                container?.classList.add('visible');
+                btn?.classList.add('active');
+            }
             
             document.getElementById('chat-input').addEventListener('keydown', (e) => {
                 if ((e.ctrlKey || e.shiftKey) && e.key === 'Enter') {
@@ -1381,20 +1478,38 @@ Be practical and actionable.`;
         }
 
         function toggleStatsDisplay() {
-            showStats = document.getElementById('statsToggle').checked;
+            showStats = !showStats;
             localStorage.setItem('showStats', showStats);
-            const statsOverlay = document.querySelector('.preview-stats');
-            if (statsOverlay) {
-                statsOverlay.style.display = showStats ? 'block' : 'none';
+            
+            const container = document.getElementById('header-stats-container');
+            const btn = document.getElementById('statsToggleBtn');
+            
+            if (showStats) {
+                container.classList.add('visible');
+                btn.classList.add('active');
+                addResponse('System', 'Stats display: ON');
+            } else {
+                container.classList.remove('visible');
+                btn.classList.remove('active');
+                addResponse('System', 'Stats display: OFF');
             }
-            addResponse('System', showStats ? 'Stats display: ON' : 'Stats display: OFF');
         }
 
         function updateSettingsDisplay() {
             document.getElementById('fpsSlider').value = targetFPS;
             document.getElementById('fpsValueDisplay').textContent = targetFPS;
             document.getElementById('settingsFpsTarget').textContent = targetFPS;
-            document.getElementById('statsToggle').checked = showStats;
+            
+            const container = document.getElementById('header-stats-container');
+            const btn = document.getElementById('statsToggleBtn');
+            
+            if (showStats) {
+                container?.classList.add('visible');
+                btn?.classList.add('active');
+            } else {
+                container?.classList.remove('visible');
+                btn?.classList.remove('active');
+            }
         }
 
         // Update settings stats display
