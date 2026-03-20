@@ -6,15 +6,13 @@
     <title>TEoAAAG - Minimal Dev Environment</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; background: #0d1117; color: #c9d1d9; overflow: hidden; height: 100vh; font-size: 12px; }
-        body.fullscreen { position: fixed; width: 100%; height: 100%; top: 0; left: 0; }
-        .container { display: grid; grid-template-columns: 300px 1fr 300px; grid-template-rows: auto 1fr; gap: 0; height: 100vh; background: #0d1117; }
-        .container.fullscreen { grid-template-columns: 1fr; }
-        .container.fullscreen .left-panel,
-        .container.fullscreen .right-panel { display: none; }
-        .container.fullscreen .center-panel { grid-column: 1; }
+        html, body { width: 100%; height: 100%; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; background: #0d1117; color: #c9d1d9; overflow: hidden; font-size: 12px; }
         
-        .header { grid-column: 1 / -1; background: #161b22; border-bottom: 1px solid #30363d; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; }
+        .container { display: flex; flex-direction: column; width: 100%; height: 100%; }
+        .header { background: #161b22; border-bottom: 1px solid #30363d; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; min-height: 40px; }
+        .header.hidden { display: none; }
+        
         .header h1 { font-size: 13px; color: #58a6ff; font-weight: 600; }
         .header-buttons { display: flex; gap: 6px; }
         .header-btn { background: #1f2937; color: #e5e7eb; border: 1px solid #374151; padding: 6px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s ease; }
@@ -26,9 +24,13 @@
         .status-dot.offline { background: #f87171; animation: none; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         
-        .left-panel { grid-column: 1; grid-row: 2; background: #0d1117; border-right: 1px solid #30363d; display: flex; flex-direction: column; }
-        .chat-header { background: #161b22; padding: 8px 12px; border-bottom: 1px solid #30363d; font-weight: 600; font-size: 11px; color: #58a6ff; }
-        .chat-responses { flex: 1; overflow-y: auto; padding: 12px 8px; display: flex; flex-direction: column; gap: 6px; }
+        .content { display: flex; flex: 1; width: 100%; min-height: 0; }
+        
+        .left-panel { flex: 0 0 300px; background: #0d1117; border-right: 1px solid #30363d; display: flex; flex-direction: column; min-width: 0; }
+        .left-panel.hidden { display: none; }
+        
+        .chat-header { background: #161b22; padding: 8px 12px; border-bottom: 1px solid #30363d; font-weight: 600; font-size: 11px; color: #58a6ff; flex-shrink: 0; }
+        .chat-responses { flex: 1; overflow-y: auto; padding: 12px 8px; display: flex; flex-direction: column; gap: 6px; min-height: 0; }
         .response { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; font-size: 11px; line-height: 1.4; color: #c9d1d9; word-wrap: break-word; max-width: 90%; }
         .response.user { align-self: flex-end; background: #1e3a4c; border-color: #2d5a7b; margin-right: 4px; }
         .response.bot { align-self: flex-start; background: #161b22; border-color: #30363d; margin-left: 4px; }
@@ -45,18 +47,21 @@
         button:hover { background: #374151; border-color: #4b5563; color: #f3f4f6; }
         button:active { background: #111827; border-color: #1f2937; }
         
-        .center-panel { grid-column: 2; grid-row: 2; background: #0d1117; display: flex; flex-direction: column; border-right: 1px solid #30363d; position: relative; }
-        .code-header { background: #161b22; padding: 8px 12px; border-bottom: 1px solid #30363d; font-weight: 600; font-size: 11px; color: #58a6ff; display: flex; justify-content: space-between; align-items: center; }
+        .center-panel { flex: 1; background: #0d1117; display: flex; flex-direction: column; border-right: 1px solid #30363d; position: relative; min-width: 0; }
+        .code-header { background: #161b22; padding: 8px 12px; border-bottom: 1px solid #30363d; font-weight: 600; font-size: 11px; color: #58a6ff; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .code-header.hidden { display: none; }
         .fullscreen-btn { background: none; border: none; color: #58a6ff; cursor: pointer; font-size: 12px; padding: 0; width: auto; }
         .fullscreen-btn:hover { color: #93c5fd; }
-        .code-area { flex: 1; overflow: auto; padding: 12px; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; color: #8b949e; }
+        .code-area { flex: 1; overflow: auto; padding: 12px; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; color: #8b949e; min-height: 0; }
         
-        #preview3d { width: 100%; height: 100%; background: #0d1117; border: 1px solid #30363d; }
+        #preview3d { width: 100%; height: 100%; background: #0d1117; display: block; }
         .preview-stats { position: absolute; top: 10px; left: 10px; background: rgba(13, 17, 23, 0.95); border: 1px solid #30363d; border-radius: 4px; padding: 8px; font-family: 'Courier New', monospace; font-size: 10px; color: #58a6ff; line-height: 1.6; z-index: 100; pointer-events: none; white-space: nowrap; }
         
-        .right-panel { grid-column: 3; grid-row: 2; background: #0d1117; border-left: 1px solid #30363d; display: flex; flex-direction: column; }
-        .files-header { background: #161b22; padding: 8px 12px; border-bottom: 1px solid #30363d; font-weight: 600; font-size: 11px; color: #58a6ff; }
-        .file-tree { flex: 1; overflow-y: auto; padding: 8px; font-size: 11px; }
+        .right-panel { flex: 0 0 300px; background: #0d1117; border-left: 1px solid #30363d; display: flex; flex-direction: column; min-width: 0; }
+        .right-panel.hidden { display: none; }
+        
+        .files-header { background: #161b22; padding: 8px 12px; border-bottom: 1px solid #30363d; font-weight: 600; font-size: 11px; color: #58a6ff; flex-shrink: 0; }
+        .file-tree { flex: 1; overflow-y: auto; padding: 8px; font-size: 11px; min-height: 0; }
         .file-item { padding: 4px 6px; cursor: pointer; border-radius: 3px; transition: all 0.2s; user-select: none; color: #8b949e; }
         .file-item:hover { background: #161b22; color: #58a6ff; }
         
@@ -93,7 +98,6 @@
         .section-label { color: #58a6ff; font-weight: 600; margin: 8px 0 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; }
         .path-box { background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 8px; margin-bottom: 8px; }
         .path-text { color: #e5e7eb; font-size: 10px; line-height: 1.5; font-family: 'Courier New', monospace; }
-        
         .info-text { color: #9ca3af; font-size: 10px; margin-bottom: 8px; line-height: 1.5; }
         
         ::-webkit-scrollbar { width: 8px; }
@@ -104,7 +108,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
+        <div class="header" id="header">
             <h1>TEoAAAG</h1>
             <div class="header-buttons">
                 <button class="header-btn" onclick="openModelsModal()">📦 Models</button>
@@ -119,29 +123,31 @@
             </div>
         </div>
 
-        <div class="left-panel">
-            <div class="chat-header">Chat</div>
-            <div class="chat-responses" id="chat-responses"></div>
-            <div class="chat-input-area">
-                <textarea id="chat-input" placeholder="Ask anything... (Ctrl+Enter to send)"></textarea>
-                <div class="chat-buttons">
-                    <button onclick="sendChat()">Send</button>
-                    <button onclick="clearChat()">Clear</button>
+        <div class="content">
+            <div class="left-panel" id="left-panel">
+                <div class="chat-header">Chat</div>
+                <div class="chat-responses" id="chat-responses"></div>
+                <div class="chat-input-area">
+                    <textarea id="chat-input" placeholder="Ask anything... (Ctrl+Enter to send)"></textarea>
+                    <div class="chat-buttons">
+                        <button onclick="sendChat()">Send</button>
+                        <button onclick="clearChat()">Clear</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="center-panel">
-            <div class="code-header">
-                <span>3D Preview / Status</span>
-                <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle fullscreen (F)">⛶</button>
+            <div class="center-panel">
+                <div class="code-header" id="code-header">
+                    <span>3D Preview / Status</span>
+                    <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle fullscreen (F)">⛶</button>
+                </div>
+                <canvas id="preview3d"></canvas>
             </div>
-            <canvas id="preview3d"></canvas>
-        </div>
 
-        <div class="right-panel">
-            <div class="files-header">Files</div>
-            <div class="file-tree" id="file-tree"></div>
+            <div class="right-panel" id="right-panel">
+                <div class="files-header">Files</div>
+                <div class="file-tree" id="file-tree"></div>
+            </div>
         </div>
     </div>
 
@@ -255,25 +261,60 @@
             // Fullscreen hotkey (F)
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'f' || e.key === 'F') {
-                    toggleFullscreen();
+                    if (!isInputFocused()) {
+                        e.preventDefault();
+                        toggleFullscreen();
+                    }
+                }
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                if (renderer) {
+                    const canvas = document.getElementById('preview3d');
+                    const width = canvas.parentElement.clientWidth;
+                    const height = canvas.parentElement.clientHeight;
+                    camera.aspect = width / height;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(width, height);
                 }
             });
             
             addResponse('System', `Dashboard ready. Model: ${MODEL}\n\nPress Ctrl+Enter to send.\nPress F for fullscreen.`);
         }
 
+        function isInputFocused() {
+            return document.activeElement === document.getElementById('chat-input') ||
+                   document.activeElement === document.getElementById('modelName') ||
+                   document.activeElement === document.getElementById('customPath');
+        }
+
         // Fullscreen toggle
         function toggleFullscreen() {
-            const container = document.querySelector('.container');
-            const body = document.body;
+            const header = document.getElementById('header');
+            const leftPanel = document.getElementById('left-panel');
+            const rightPanel = document.getElementById('right-panel');
+            const codeHeader = document.getElementById('code-header');
             
             isFullscreen = !isFullscreen;
-            container.classList.toggle('fullscreen', isFullscreen);
-            body.classList.toggle('fullscreen', isFullscreen);
             
             if (isFullscreen) {
-                addResponse('System', 'Fullscreen mode enabled. Press F to exit.');
+                header.classList.add('hidden');
+                leftPanel.classList.add('hidden');
+                rightPanel.classList.add('hidden');
+                codeHeader.classList.add('hidden');
+                addResponse('System', 'Fullscreen mode. Press F to exit.');
+            } else {
+                header.classList.remove('hidden');
+                leftPanel.classList.remove('hidden');
+                rightPanel.classList.remove('hidden');
+                codeHeader.classList.remove('hidden');
             }
+
+            // Trigger resize event for canvas
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 100);
         }
 
         // 3D Preview with Three.js
@@ -357,15 +398,6 @@
                 `;
             }
             animate();
-
-            // Handle resize
-            window.addEventListener('resize', () => {
-                const newWidth = canvas.parentElement.clientWidth;
-                const newHeight = canvas.parentElement.clientHeight;
-                camera.aspect = newWidth / newHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(newWidth, newHeight);
-            });
         }
 
         // Load file tree
