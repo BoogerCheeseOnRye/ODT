@@ -23,45 +23,12 @@
         .header-btn:active { background: #111827; border-color: #1f2937; }
         
         
-        /* Header stats display */
-        .header-stats-container {
-            display: none;
-            flex: 0 0 auto;
-            gap: 8px;
-            align-items: center;
-            margin-left: 12px;
-            padding-left: 12px;
-            border-left: 1px solid #30363d;
-        }
-        
-        .header-stats-container.visible {
+        /* Expandable Stats Bar */
+        .stats-bar {
             display: flex;
-        }
-        
-        .header-stats-box {
-            background: #0d1117;
-            border: 1px solid #30363d;
-            border-radius: 3px;
-            padding: 4px 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 10px;
-            color: #58a6ff;
-            white-space: nowrap;
-            min-width: 50px;
-            text-align: center;
-        }
-        
-        .header-stats-label {
-            font-size: 9px;
-            color: #6b7280;
-            font-weight: 600;
-        }
-        
-        .header-stats-value {
-            font-size: 11px;
-            color: #58a6ff;
-            font-weight: 600;
-            display: block;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
         }
         
         .stats-toggle-btn {
@@ -71,7 +38,7 @@
             padding: 6px 10px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
             transition: all 0.2s ease;
             min-height: 32px;
@@ -90,6 +57,45 @@
             background: #3b82f6;
             border-color: #1d4ed8;
             color: #fff;
+        }
+        
+        .stats-display {
+            display: none;
+            flex: 0 0 auto;
+            gap: 4px;
+            align-items: center;
+            padding: 0 8px;
+        }
+        
+        .stats-display.visible {
+            display: flex;
+        }
+        
+        .stat-item {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 3px;
+            padding: 4px 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            color: #58a6ff;
+            white-space: nowrap;
+            text-align: center;
+            min-width: 45px;
+        }
+        
+        .stat-label {
+            font-size: 8px;
+            color: #6b7280;
+            font-weight: 600;
+            display: block;
+        }
+        
+        .stat-value {
+            font-size: 10px;
+            color: #58a6ff;
+            font-weight: 600;
+            display: block;
         }
 
         .header-status { display: flex; gap: 8px; font-size: 11px; margin-left: auto; }
@@ -612,25 +618,27 @@
                 <span>Proxy</span>
                 <span class="status-dot" id="proxy-status"></span>
             </div>
-            <div class="header-stats-container" id="header-stats-container">
-                <div class="header-stats-box">
-                    <div class="header-stats-label">FPS</div>
-                    <div class="header-stats-value" id="header-fps">0</div>
-                </div>
-                <div class="header-stats-box">
-                    <div class="header-stats-label">Render</div>
-                    <div class="header-stats-value" id="header-render">0ms</div>
-                </div>
-                <div class="header-stats-box">
-                    <div class="header-stats-label">Objects</div>
-                    <div class="header-stats-value" id="header-objects">0</div>
-                </div>
-                <div class="header-stats-box">
-                    <div class="header-stats-label">Memory</div>
-                    <div class="header-stats-value" id="header-memory">0MB</div>
+            <div class="stats-bar" id="statsBar">
+                <button class="stats-toggle-btn" id="statsToggleBtn" onclick="toggleStatsDisplay()" title="Stats">+</button>
+                <div class="stats-display" id="statsDisplay">
+                    <div class="stat-item">
+                        <span class="stat-label">FPS</span>
+                        <span class="stat-value" id="header-fps">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Render</span>
+                        <span class="stat-value" id="header-render">0ms</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Objects</span>
+                        <span class="stat-value" id="header-objects">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Memory</span>
+                        <span class="stat-value" id="header-memory">0MB</span>
+                    </div>
                 </div>
             </div>
-            <button class="stats-toggle-btn" id="statsToggleBtn" onclick="toggleStatsDisplay()" title="Toggle stats">📊</button>
         </div>
 
         <div class="content">
@@ -890,11 +898,14 @@
             init3D();
             
             // Initialize stats display
-            const container = document.getElementById('header-stats-container');
+            const display = document.getElementById('statsDisplay');
             const btn = document.getElementById('statsToggleBtn');
             if (showStats) {
-                container?.classList.add('visible');
+                display?.classList.add('visible');
                 btn?.classList.add('active');
+                btn.textContent = '−';
+            } else {
+                btn.textContent = '+';
             }
             
             document.getElementById('chat-input').addEventListener('keydown', (e) => {
@@ -1656,17 +1667,17 @@ Be practical and actionable.`;
             showStats = !showStats;
             localStorage.setItem('showStats', showStats);
             
-            const container = document.getElementById('header-stats-container');
+            const display = document.getElementById('statsDisplay');
             const btn = document.getElementById('statsToggleBtn');
             
             if (showStats) {
-                container.classList.add('visible');
+                display.classList.add('visible');
                 btn.classList.add('active');
-                addResponse('System', 'Stats display: ON');
+                btn.textContent = '−';
             } else {
-                container.classList.remove('visible');
+                display.classList.remove('visible');
                 btn.classList.remove('active');
-                addResponse('System', 'Stats display: OFF');
+                btn.textContent = '+';
             }
         }
 
@@ -1675,15 +1686,17 @@ Be practical and actionable.`;
             document.getElementById('fpsValueDisplay').textContent = targetFPS;
             document.getElementById('settingsFpsTarget').textContent = targetFPS;
             
-            const container = document.getElementById('header-stats-container');
+            const display = document.getElementById('statsDisplay');
             const btn = document.getElementById('statsToggleBtn');
             
             if (showStats) {
-                container?.classList.add('visible');
+                display?.classList.add('visible');
                 btn?.classList.add('active');
+                btn.textContent = '−';
             } else {
-                container?.classList.remove('visible');
+                display?.classList.remove('visible');
                 btn?.classList.remove('active');
+                btn.textContent = '+';
             }
         }
 
