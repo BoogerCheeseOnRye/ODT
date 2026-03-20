@@ -251,6 +251,25 @@
                     </div>
                 </div>
 
+                <div style="border-top: 1px solid #30363d; padding-top: 12px; margin-bottom: 12px;">
+                    <div class="section-label">Scan Local Models</div>
+                    <button class="model-btn" style="width: 100%; background: #10b981; border-color: #059669; color: #fff; margin-bottom: 6px;" onclick="scanForModels()">🔍 Scan E:\models</button>
+                    <div id="scanProgress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="scanProgressBar"></div>
+                        </div>
+                        <div id="scanStatus" style="color: #9ca3af; font-size: 10px;"></div>
+                    </div>
+                    <div id="discoveredModels" style="margin-top: 6px;"></div>
+                </div>
+                    <div id="pullProgress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="pullProgressBar"></div>
+                        </div>
+                        <div id="pullStatus" style="color: #9ca3af; font-size: 10px;"></div>
+                    </div>
+                </div>
+
                 <div style="border-top: 1px solid #30363d; padding-top: 12px;">
                     <div class="section-label">Loaded Models</div>
                     <div id="modelsList"></div>
@@ -957,6 +976,81 @@ Be practical and actionable.`;
 
         // Start
         init();
-    </script>
+    
+        // Model scanning
+        async function scanForModels() {
+            const scanBtn = event.target;
+            scanBtn.disabled = true;
+            scanBtn.textContent = '⏳ Scanning...';
+            
+            const progress = document.getElementById('scanProgress');
+            const status = document.getElementById('scanStatus');
+            const discovered = document.getElementById('discoveredModels');
+            
+            progress.style.display = 'block';
+            discovered.innerHTML = '';
+            status.textContent = 'Scanning E:\\models...';
+
+            try {
+                const res = await fetch(PROXY_HOST + '/api/scan-models', { method: 'GET' });
+                const data = await res.json();
+
+                if (data.models && data.models.length > 0) {
+                    status.textContent = `✓ Found ${data.models.length} model(s)`;
+                    discovered.innerHTML = data.models.map(m => `
+                        <div class="model-item" style="margin-bottom: 4px;">
+                            <div>
+                                <div class="model-name">${m.filename}</div>
+                                <div class="model-size">${m.size}GB</div>
+                            </div>
+                            <button class="model-btn" style="padding: 3px 8px; font-size: 9px;" onclick="importFoundModel('${m.path}', '${m.name}')">Import</button>
+                        </div>
+                    `).join('');
+                } else {
+                    status.textContent = data.error || 'No GGUF models found in E:\\models';
+                    discovered.innerHTML = '<div style="color: #9ca3af; font-size: 10px;">No .gguf files found</div>';
+                }
+            } catch (err) {
+                status.textContent = 'Error: ' + err.message;
+                discovered.innerHTML = '<div style="color: #f87171; font-size: 10px;">Scan failed</div>';
+            } finally {
+                scanBtn.disabled = false;
+                scanBtn.textContent = '🔍 Scan E:\\models';
+                progress.style.display = 'none';
+            }
+        }
+
+        async function importFoundModel(modelPath, modelName) {
+            const importBtn = event.target;
+            importBtn.disabled = true;
+            importBtn.textContent = '⏳ Importing...';
+            
+            try {
+                const res = await fetch(PROXY_HOST + '/api/import-model', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: modelPath, name: modelName })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    addResponse('System', `✓ Imported: ${modelName}`);
+                    importBtn.textContent = '✓ Imported';
+                    importBtn.disabled = true;
+                    setTimeout(loadModels, 1500);
+                } else {
+                    addResponse('Error', `Failed to import: ${data.error || 'Unknown error'}`);
+                    importBtn.textContent = 'Import';
+                    importBtn.disabled = false;
+                }
+            } catch (err) {
+                addResponse('Error', `Import error: ${err.message}`);
+                importBtn.textContent = 'Import';
+                importBtn.disabled = false;
+            }
+        }
+
+</script>
 </body>
 </html>

@@ -2,11 +2,16 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { exec } = require('child_process');
+const { promisify } = require('util');
+
+const execAsync = promisify(exec);
 
 // Configuration
 const DASHBOARD_PORT = 8080;
 const PROXY_PORT = 9001;
 const OLLAMA_HOST = 'http://localhost:11434';
+const MODELS_DIR = 'E:\\models';
 
 // Get local IP address
 function getLocalIP() {
@@ -30,6 +35,63 @@ console.log(`Local IP: ${LOCAL_IP}`);
 console.log(`Dashboard: http://${LOCAL_IP}:${DASHBOARD_PORT}`);
 console.log(`Proxy: http://${LOCAL_IP}:${PROXY_PORT}`);
 console.log(`\n📱 From tablet on same WiFi:\n   http://${LOCAL_IP}:${DASHBOARD_PORT}\n`);
+
+// Scan for GGUF model files
+async function scanForModels(scanDir = MODELS_DIR) {
+    const models = [];
+    
+    try {
+        if (!fs.existsSync(scanDir)) {
+            return { models: [], error: `Directory not found: ${scanDir}` };
+        }
+
+        const files = fs.readdirSync(scanDir);
+        
+        for (const file of files) {
+            const fullPath = path.join(scanDir, file);
+            const stat = fs.statSync(fullPath);
+            
+            if (stat.isFile() && file.endsWith('.gguf')) {
+                const sizeGB = (stat.size / 1024 / 1024 / 1024).toFixed(2);
+                const modelName = file.replace('.gguf', '').replace(/_/g, ':');
+                
+                models.push({
+                    filename: file,
+                    path: fullPath,
+                    name: modelName,
+                    size: sizeGB,
+                    sizeBytes: stat.size,
+                    discovered: true
+                });
+            }
+        }
+        
+        return { models, count: models.length };
+    } catch (err) {
+        return { models: [], error: err.message };
+    }
+}
+
+// Import model to Ollama via modelfile
+async function importModel(modelPath, modelName) {
+    try {
+        const modelfile = `FROM ${modelPath}\nPARAMETER top_k 40\nPARAMETER top_p 0.9\nPARAMETER temperature 0.8`;
+        const modelfilePath = path.join(os.tmpdir(), `Modelfile_${Date.now()}`);
+        
+        fs.writeFileSync(modelfilePath, modelfile);
+        
+        const { stdout, stderr } = await execAsync(`ollama create ${modelName} -f ${modelfilePath}`, {
+            timeout: 30000,
+            maxBuffer: 10 * 1024 * 1024
+        });
+        
+        fs.unlinkSync(modelfilePath);
+        
+        return { success: true, message: `Model ${modelName} imported` };
+    } catch (err) {
+        return { success: false, error: err.message };
+    }
+}
 
 // Dashboard Server with dynamic API config injection
 const dashboardServer = http.createServer((req, res) => {
@@ -130,7 +192,7 @@ const dashboardServer = http.createServer((req, res) => {
 });
 
 // Proxy Server (CORS bridge to Ollama)
-const proxyServer = http.createServer((req, res) => {
+const proxyServer = http.createServer(async (req, res) => {
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -145,6 +207,32 @@ const proxyServer = http.createServer((req, res) => {
     if (req.url === '/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'ok' }));
+        return;
+    }
+
+    // Model scanning endpoint
+    if (req.url === '/api/scan-models' && req.method === 'GET') {
+        const result = await scanForModels();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(result));
+        return;
+    }
+
+    // Model import endpoint
+    if (req.url === '/api/import-model' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk; });
+        req.on('end', async () => {
+            try {
+                const data = JSON.parse(body);
+                const result = await importModel(data.path, data.name);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(result));
+            } catch (err) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: err.message }));
+            }
+        });
         return;
     }
 
