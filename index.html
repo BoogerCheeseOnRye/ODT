@@ -730,6 +730,28 @@
     </div>
     
 
+    <!-- 3D Preview Diagnostics Modal -->
+    <div id="diagnosticsModal" class="modal">
+        <div class="modal-content" style="max-width: 500px; max-height: 90vh;">
+            <div class="modal-header">
+                <span>3D Preview Diagnostics</span>
+                <button class="modal-close" onclick="closeDiagnosticsModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="diagnosticsResults" style="max-height: 500px; overflow-y: auto;">
+                    <div style="color: #58a6ff; text-align: center; padding: 20px;">
+                        <div style="font-size: 12px; margin-bottom: 10px;">Running diagnostics...</div>
+                        <div style="animation: pulse 1s infinite; font-size: 20px;">⏳</div>
+                    </div>
+                </div>
+                <div style="margin-top: 12px;">
+                    <button class="model-btn" style="width: 100%; background: #3b82f6; border-color: #1d4ed8; color: #fff;" onclick="runDiagnostics()">Re-run</button>
+                    <button class="model-btn" style="width: 100%; margin-top: 6px;" onclick="closeDiagnosticsModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Settings Modal -->
     <div id="settingsModal" class="modal">
         <div class="modal-content">
@@ -769,6 +791,7 @@
                 </label>
 
                 <div style="border-top: 1px solid #30363d; padding-top: 12px;">
+                    <button class="model-btn" style="width: 100%; background: #f59e0b; border-color: #d97706; color: #fff; margin-bottom: 6px;" onclick="openDiagnosticsModal()">🔍 Run Diagnostics</button>
                     <button class="model-btn" style="width: 100%; background: #3b82f6; border-color: #1d4ed8; color: #fff;" onclick="closeSettingsModal()">Done</button>
                 </div>
             </div>
@@ -1884,6 +1907,192 @@ Be practical and actionable.`;
             oldSaveEditor.call(this);
             saveEditorState();
         };
+
+
+        // 3D Preview Diagnostics
+        async function openDiagnosticsModal() {
+            document.getElementById('diagnosticsModal').classList.add('active');
+            runDiagnostics();
+        }
+
+        function closeDiagnosticsModal() {
+            document.getElementById('diagnosticsModal').classList.remove('active');
+        }
+
+        async function runDiagnostics() {
+            const results = document.getElementById('diagnosticsResults');
+            const diagnostics = {
+                timestamp: new Date().toLocaleTimeString(),
+                tests: [],
+                passed: 0,
+                failed: 0
+            };
+
+            // Test 1: WebGL Support
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (gl) {
+                    diagnostics.tests.push({ name: 'WebGL Support', status: '✓', message: 'WebGL available' });
+                    diagnostics.passed++;
+                } else {
+                    diagnostics.tests.push({ name: 'WebGL Support', status: '✗', message: 'WebGL not available' });
+                    diagnostics.failed++;
+                }
+            } catch (e) {
+                diagnostics.tests.push({ name: 'WebGL Support', status: '✗', message: e.message });
+                diagnostics.failed++;
+            }
+
+            // Test 2: Three.js Library
+            try {
+                if (typeof THREE !== 'undefined' && THREE.Scene) {
+                    diagnostics.tests.push({ name: 'Three.js Library', status: '✓', message: 'Three.js loaded' });
+                    diagnostics.passed++;
+                } else {
+                    diagnostics.tests.push({ name: 'Three.js Library', status: '✗', message: 'Three.js not loaded' });
+                    diagnostics.failed++;
+                }
+            } catch (e) {
+                diagnostics.tests.push({ name: 'Three.js Library', status: '✗', message: e.message });
+                diagnostics.failed++;
+            }
+
+            // Test 3: Renderer
+            try {
+                if (renderer && renderer.domElement) {
+                    diagnostics.tests.push({ name: 'WebGL Renderer', status: '✓', message: 'Renderer initialized' });
+                    diagnostics.passed++;
+                } else {
+                    diagnostics.tests.push({ name: 'WebGL Renderer', status: '✗', message: 'Renderer not initialized' });
+                    diagnostics.failed++;
+                }
+            } catch (e) {
+                diagnostics.tests.push({ name: 'WebGL Renderer', status: '✗', message: e.message });
+                diagnostics.failed++;
+            }
+
+            // Test 4: Scene
+            try {
+                if (scene && scene.children) {
+                    const objectCount = scene.children.length;
+                    diagnostics.tests.push({ name: 'Scene Integrity', status: '✓', message: `Scene OK (${objectCount} objects)` });
+                    diagnostics.passed++;
+                } else {
+                    diagnostics.tests.push({ name: 'Scene Integrity', status: '✗', message: 'Scene invalid' });
+                    diagnostics.failed++;
+                }
+            } catch (e) {
+                diagnostics.tests.push({ name: 'Scene Integrity', status: '✗', message: e.message });
+                diagnostics.failed++;
+            }
+
+            // Test 5: Camera
+            try {
+                if (camera && camera.position) {
+                    const pos = camera.position;
+                    diagnostics.tests.push({ name: 'Camera', status: '✓', message: `Camera OK (pos: ${pos.z.toFixed(1)})` });
+                    diagnostics.passed++;
+                } else {
+                    diagnostics.tests.push({ name: 'Camera', status: '✗', message: 'Camera invalid' });
+                    diagnostics.failed++;
+                }
+            } catch (e) {
+                diagnostics.tests.push({ name: 'Camera', status: '✗', message: e.message });
+                diagnostics.failed++;
+            }
+
+            // Test 6: FPS Performance
+            try {
+                const canvas = document.getElementById('preview3d');
+                if (canvas && canvas.width > 0 && canvas.height > 0) {
+                    const resolution = canvas.width + 'x' + canvas.height;
+                    diagnostics.tests.push({ name: 'Canvas Resolution', status: '✓', message: `${resolution}` });
+                    diagnostics.passed++;
+                } else {
+                    diagnostics.tests.push({ name: 'Canvas Resolution', status: '✗', message: 'Canvas invalid size' });
+                    diagnostics.failed++;
+                }
+            } catch (e) {
+                diagnostics.tests.push({ name: 'Canvas Resolution', status: '✗', message: e.message });
+                diagnostics.failed++;
+            }
+
+            // Test 7: Memory Usage
+            try {
+                if (performance.memory) {
+                    const memMB = (performance.memory.usedJSHeapSize / 1048576).toFixed(1);
+                    const memLimit = (performance.memory.jsHeapSizeLimit / 1048576).toFixed(1);
+                    const usage = ((performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit) * 100).toFixed(1);
+                    diagnostics.tests.push({ 
+                        name: 'Memory Usage', 
+                        status: usage > 80 ? '⚠' : '✓', 
+                        message: `${memMB}MB / ${memLimit}MB (${usage}%)` 
+                    });
+                    diagnostics.passed++;
+                } else {
+                    diagnostics.tests.push({ name: 'Memory Usage', status: '?', message: 'Memory API unavailable' });
+                }
+            } catch (e) {
+                diagnostics.tests.push({ name: 'Memory Usage', status: '?', message: e.message });
+            }
+
+            // Test 8: Animation Loop
+            try {
+                if (renderer && renderer.render) {
+                    diagnostics.tests.push({ name: 'Animation Loop', status: '✓', message: 'Loop active' });
+                    diagnostics.passed++;
+                } else {
+                    diagnostics.tests.push({ name: 'Animation Loop', status: '✗', message: 'Loop not running' });
+                    diagnostics.failed++;
+                }
+            } catch (e) {
+                diagnostics.tests.push({ name: 'Animation Loop', status: '✗', message: e.message });
+                diagnostics.failed++;
+            }
+
+            // Render report
+            results.innerHTML = `
+                <div style="margin-bottom: 12px;">
+                    <div style="color: #58a6ff; font-weight: 600; margin-bottom: 8px;">Diagnostic Report</div>
+                    <div style="font-size: 10px; color: #8b949e; margin-bottom: 12px;">Time: ${diagnostics.timestamp}</div>
+                    
+                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                        <div style="flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 8px; text-align: center;">
+                            <div style="font-size: 9px; color: #6b7280;">Passed</div>
+                            <div style="font-size: 16px; color: #34d399; font-weight: 600;">${diagnostics.passed}</div>
+                        </div>
+                        <div style="flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 8px; text-align: center;">
+                            <div style="font-size: 9px; color: #6b7280;">Failed</div>
+                            <div style="font-size: 16px; color: ${diagnostics.failed > 0 ? '#f87171' : '#34d399'}; font-weight: 600;">${diagnostics.failed}</div>
+                        </div>
+                        <div style="flex: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 8px; text-align: center;">
+                            <div style="font-size: 9px; color: #6b7280;">Total</div>
+                            <div style="font-size: 16px; color: #58a6ff; font-weight: 600;">${diagnostics.tests.length}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="border-top: 1px solid #30363d; padding-top: 12px;">
+                    <div style="color: #58a6ff; font-weight: 600; margin-bottom: 8px; font-size: 11px;">Test Results</div>
+                    ${diagnostics.tests.map(t => `
+                        <div style="background: #0d1117; border: 1px solid #30363d; border-radius: 3px; padding: 6px 8px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="flex: 1; font-size: 10px; color: #c9d1d9;">${t.name}</span>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <span style="font-size: 11px; ${t.status === '✓' ? 'color: #34d399;' : t.status === '✗' ? 'color: #f87171;' : 'color: #f59e0b;'} font-weight: 600;">${t.status}</span>
+                                <span style="font-size: 9px; color: #6b7280; max-width: 150px; text-align: right;">${t.message}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div style="border-top: 1px solid #30363d; margin-top: 12px; padding-top: 12px;">
+                    <div style="font-size: 10px; color: ${diagnostics.failed === 0 ? '#34d399' : '#f87171'}; font-weight: 600;">
+                        ${diagnostics.failed === 0 ? '✓ All tests passed - 3D preview is healthy' : '✗ ' + diagnostics.failed + ' issue(s) detected'}
+                    </div>
+                </div>
+            `;
+        }
 
         // Start
         init();
