@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="true">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0d1117">
     <title>TEoAAAG - Minimal Dev Environment</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -15,7 +18,7 @@
         
         .header h1 { font-size: 13px; color: #58a6ff; font-weight: 600; }
         .header-buttons { display: flex; gap: 6px; }
-        .header-btn { background: #1f2937; color: #e5e7eb; border: 1px solid #374151; padding: 6px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s ease; }
+        .header-btn { background: #1f2937; color: #e5e7eb; border: 1px solid #374151; padding: 6px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.2s ease; min-height: 32px; min-width: 32px; }
         .header-btn:hover { background: #374151; border-color: #4b5563; color: #f3f4f6; }
         .header-btn:active { background: #111827; border-color: #1f2937; }
         
@@ -43,14 +46,14 @@
         #chat-input:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1); }
         
         .chat-buttons { display: flex; gap: 6px; margin-top: 6px; }
-        button { flex: 1; background: #1f2937; color: #e5e7eb; border: 1px solid #374151; padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 600; transition: all 0.2s ease; }
+        button { flex: 1; background: #1f2937; color: #e5e7eb; border: 1px solid #374151; padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 600; transition: all 0.2s ease; min-height: 40px; }
         button:hover { background: #374151; border-color: #4b5563; color: #f3f4f6; }
         button:active { background: #111827; border-color: #1f2937; }
         
         .center-panel { flex: 1; background: #0d1117; display: flex; flex-direction: column; border-right: 1px solid #30363d; position: relative; min-width: 0; }
         .code-header { background: #161b22; padding: 8px 12px; border-bottom: 1px solid #30363d; font-weight: 600; font-size: 11px; color: #58a6ff; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .code-header.hidden { display: none; }
-        .fullscreen-btn { background: none; border: none; color: #58a6ff; cursor: pointer; font-size: 12px; padding: 0; width: auto; }
+        .fullscreen-btn { background: none; border: none; color: #58a6ff; cursor: pointer; font-size: 12px; padding: 4px; width: auto; min-height: 32px; min-width: 32px; }
         .fullscreen-btn:hover { color: #93c5fd; }
         .code-area { flex: 1; overflow: auto; padding: 12px; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; color: #8b949e; min-height: 0; }
         
@@ -65,13 +68,19 @@
         .file-item { padding: 4px 6px; cursor: pointer; border-radius: 3px; transition: all 0.2s; user-select: none; color: #8b949e; }
         .file-item:hover { background: #161b22; color: #58a6ff; }
         
+        /* Mobile/Tablet Panel Tabs */
+        .panel-tabs { display: none; background: #161b22; border-bottom: 1px solid #30363d; flex-shrink: 0; }
+        .panel-tabs.active { display: flex; gap: 0; }
+        .panel-tab { flex: 1; padding: 10px 12px; text-align: center; cursor: pointer; color: #8b949e; border: 1px solid #30363d; font-size: 11px; font-weight: 600; background: #0d1117; min-height: 40px; display: flex; align-items: center; justify-content: center; }
+        .panel-tab.active { background: #161b22; color: #58a6ff; border-bottom: 2px solid #58a6ff; }
+        
         /* Modal styles */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); z-index: 1000; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
-        .modal-content { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 14px; max-width: 450px; max-height: 80vh; overflow-y: auto; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
+        .modal-content { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 14px; max-width: 450px; max-height: 80vh; overflow-y: auto; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); margin: 10px; }
         
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; color: #58a6ff; font-weight: 600; font-size: 12px; }
-        .modal-close { background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 18px; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; transition: color 0.2s; }
+        .modal-close { background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 18px; padding: 4px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: color 0.2s; }
         .modal-close:hover { color: #f3f4f6; }
         
         .modal-body { font-size: 11px; }
@@ -79,11 +88,11 @@
         .model-name { color: #e5e7eb; font-weight: 600; font-size: 11px; }
         .model-size { color: #9ca3af; font-size: 10px; }
         .model-actions { display: flex; gap: 4px; }
-        .model-btn { background: #1f2937; color: #e5e7eb; border: 1px solid #374151; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: 600; transition: all 0.2s ease; }
+        .model-btn { background: #1f2937; color: #e5e7eb; border: 1px solid #374151; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: 600; transition: all 0.2s ease; min-height: 32px; }
         .model-btn:hover { background: #374151; border-color: #4b5563; color: #f3f4f6; }
         .model-btn:active { background: #111827; }
         
-        .modal-input { width: 100%; background: #0d1117; border: 1px solid #30363d; color: #e5e7eb; padding: 6px 8px; border-radius: 4px; font-size: 11px; margin-bottom: 6px; font-family: 'Courier New', monospace; transition: border 0.2s; }
+        .modal-input { width: 100%; background: #0d1117; border: 1px solid #30363d; color: #e5e7eb; padding: 6px 8px; border-radius: 4px; font-size: 11px; margin-bottom: 6px; font-family: 'Courier New', monospace; transition: border 0.2s; min-height: 40px; }
         .modal-input:focus { border-color: #58a6ff; outline: none; }
         
         .progress-bar { width: 100%; height: 4px; background: #30363d; border-radius: 2px; margin: 4px 0; overflow: hidden; }
@@ -104,6 +113,63 @@
         ::-webkit-scrollbar-track { background: #0d1117; }
         ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+
+        /* Tablet/Mobile Breakpoints */
+        @media (max-width: 1024px) {
+            .header h1 { font-size: 12px; }
+            .header-btn { font-size: 10px; padding: 5px 8px; }
+            .panel-tabs { display: flex; }
+            .left-panel, .right-panel { flex: 0 0 100%; }
+            .left-panel.hidden, .right-panel.hidden { display: none; }
+            .center-panel { border-right: none; }
+        }
+
+        @media (max-width: 768px) {
+            body { font-size: 11px; }
+            .header { padding: 8px; min-height: 36px; }
+            .header h1 { font-size: 11px; }
+            .header-buttons { gap: 4px; }
+            .header-btn { font-size: 9px; padding: 4px 6px; }
+            .header-status { font-size: 10px; }
+            
+            button { font-size: 9px; padding: 5px 6px; min-height: 36px; }
+            #chat-input { font-size: 10px; padding: 5px 6px; height: 50px; }
+            
+            .chat-header, .files-header, .code-header { font-size: 10px; padding: 6px 8px; }
+            .chat-responses { padding: 8px 6px; gap: 4px; }
+            .response { font-size: 10px; padding: 6px 8px; }
+            .response-label { font-size: 8px; }
+            
+            .modal-content { padding: 10px; max-width: 90vw; max-height: 90vh; }
+            .modal-input { font-size: 10px; min-height: 36px; }
+            .model-btn { font-size: 9px; min-height: 28px; padding: 3px 6px; }
+            
+            .preview-stats { font-size: 9px; padding: 6px; top: 5px; left: 5px; }
+        }
+
+        @media (max-width: 480px) {
+            .header { padding: 6px; min-height: 32px; }
+            .header h1 { font-size: 10px; }
+            .header-status { display: none; }
+            .header-buttons { gap: 2px; }
+            .header-btn { font-size: 8px; padding: 4px 5px; min-height: 28px; min-width: 28px; }
+            
+            body { font-size: 10px; }
+            button { font-size: 8px; min-height: 32px; }
+            #chat-input { font-size: 9px; height: 45px; }
+            
+            .chat-header, .files-header, .code-header { font-size: 9px; padding: 5px 6px; }
+            .response { font-size: 9px; padding: 5px 6px; }
+            .response-label { font-size: 7px; }
+            
+            .modal-content { padding: 8px; margin: 8px; }
+            .modal-input { font-size: 9px; min-height: 32px; }
+            .model-btn { font-size: 8px; min-height: 24px; padding: 2px 4px; }
+            .modal-btn { min-height: 32px; }
+            
+            .preview-stats { font-size: 8px; padding: 4px; top: 3px; left: 3px; }
+            .panel-tab { font-size: 10px; padding: 6px 8px; min-height: 36px; }
+        }
     </style>
 </head>
 <body>
@@ -111,11 +177,11 @@
         <div class="header" id="header">
             <h1>TEoAAAG</h1>
             <div class="header-buttons">
-                <button class="header-btn" onclick="openModelsModal()">📦 Models</button>
-                <button class="header-btn" onclick="openPathsModal()">📂 Paths</button>
-                <button class="header-btn" onclick="runOptimize()">⚙️ Optimize</button>
+                <button class="header-btn" onclick="openModelsModal()" title="Models">📦</button>
+                <button class="header-btn" onclick="openPathsModal()" title="Paths">📂</button>
+                <button class="header-btn" onclick="runOptimize()" title="Optimize">⚙️</button>
             </div>
-            <div class="header-status">
+            <div class="header-status" id="header-status">
                 <span>Ollama</span>
                 <span class="status-dot" id="ollama-status"></span>
                 <span>Proxy</span>
@@ -125,10 +191,15 @@
 
         <div class="content">
             <div class="left-panel" id="left-panel">
+                <div class="panel-tabs" id="panel-tabs">
+                    <div class="panel-tab active" onclick="switchPanel('chat')">💬 Chat</div>
+                    <div class="panel-tab" onclick="switchPanel('files')">📂 Files</div>
+                    <div class="panel-tab" onclick="switchPanel('preview')">▶️ View</div>
+                </div>
                 <div class="chat-header">Chat</div>
                 <div class="chat-responses" id="chat-responses"></div>
                 <div class="chat-input-area">
-                    <textarea id="chat-input" placeholder="Ask anything... (Ctrl+Enter to send)"></textarea>
+                    <textarea id="chat-input" placeholder="Ask anything... (Ctrl+Enter)"></textarea>
                     <div class="chat-buttons">
                         <button onclick="sendChat()">Send</button>
                         <button onclick="clearChat()">Clear</button>
@@ -161,7 +232,7 @@
             <div class="modal-body">
                 <div style="margin-bottom: 12px;">
                     <div class="section-label">Pull New Model</div>
-                    <input type="text" id="modelName" class="modal-input" placeholder="e.g., phi:2.7b, mistral:latest">
+                    <input type="text" id="modelName" class="modal-input" placeholder="e.g., phi:2.7b">
                     <div style="display: flex; gap: 6px;">
                         <button class="model-btn" style="flex: 1; background: #3b82f6; border-color: #1d4ed8; color: #fff;" onclick="pullModel()">Pull</button>
                         <button class="model-btn" onclick="closeModelsModal()" style="flex: 1;">Close</button>
@@ -207,7 +278,7 @@
                 </div>
                 
                 <div class="section-label">Custom Paths (E:\ only)</div>
-                <input type="text" id="customPath" class="modal-input" placeholder="e.g., E:\myproject\" style="margin-bottom: 6px;">
+                <input type="text" id="customPath" class="modal-input" placeholder="E:\myproject\">
                 <button class="model-btn" style="width: 100%; background: #3b82f6; border-color: #1d4ed8; color: #fff; margin-bottom: 8px;" onclick="addCustomPath()">Add Path</button>
                 
                 <div id="customPathsList" style="margin-bottom: 8px;"></div>
@@ -243,9 +314,12 @@
         let customPaths = JSON.parse(localStorage.getItem('customPaths') || '[]');
         let scene, camera, renderer;
         let isFullscreen = false;
+        let currentPanel = 'chat';
+        let isMobile = false;
 
         // Initialize
         function init() {
+            checkMobile();
             loadFileTree();
             checkStatus();
             loadChatHistory();
@@ -270,6 +344,7 @@
 
             // Handle window resize
             window.addEventListener('resize', () => {
+                checkMobile();
                 if (renderer) {
                     const canvas = document.getElementById('preview3d');
                     const width = canvas.parentElement.clientWidth;
@@ -281,6 +356,41 @@
             });
             
             addResponse('System', `Dashboard ready. Model: ${MODEL}\n\nPress Ctrl+Enter to send.\nPress F for fullscreen.`);
+        }
+
+        function checkMobile() {
+            const width = window.innerWidth;
+            isMobile = width <= 1024;
+            const tabs = document.getElementById('panel-tabs');
+            const leftPanel = document.getElementById('left-panel');
+            const rightPanel = document.getElementById('right-panel');
+            
+            if (isMobile) {
+                tabs.classList.add('active');
+                if (currentPanel === 'files') {
+                    leftPanel.style.display = 'none';
+                    rightPanel.style.display = 'flex';
+                } else if (currentPanel === 'preview') {
+                    leftPanel.style.display = 'none';
+                    rightPanel.style.display = 'none';
+                } else {
+                    leftPanel.style.display = 'flex';
+                    rightPanel.style.display = 'none';
+                }
+            } else {
+                tabs.classList.remove('active');
+                leftPanel.style.display = 'flex';
+                rightPanel.style.display = 'flex';
+            }
+        }
+
+        function switchPanel(panel) {
+            currentPanel = panel;
+            const tabs = document.querySelectorAll('.panel-tab');
+            tabs.forEach((t, i) => {
+                t.classList.toggle('active', (i === 0 && panel === 'chat') || (i === 1 && panel === 'files') || (i === 2 && panel === 'preview'));
+            });
+            checkMobile();
         }
 
         function isInputFocused() {
@@ -329,7 +439,7 @@
             camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
             camera.position.z = 5;
 
-            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
             renderer.setSize(width, height);
             renderer.setPixelRatio(window.devicePixelRatio);
 
@@ -383,13 +493,11 @@
                     stats.lastTime = now;
                     stats.objects = scene.children.length;
                     
-                    // Get memory usage if available
                     if (performance.memory) {
                         stats.memory = (performance.memory.usedJSHeapSize / 1048576).toFixed(1);
                     }
                 }
 
-                // Update stats display
                 statsOverlay.innerHTML = `
                     FPS: ${stats.fps}<br>
                     Render: ${stats.renderTime}ms<br>
@@ -540,7 +648,6 @@
 
             const checks = [];
 
-            // Check 1: Ollama connection
             fetch(OLLAMA_HOST, { method: 'HEAD', mode: 'no-cors' })
                 .then(() => checks.push({ name: 'Ollama Connection', status: '✓ OK', failed: false }))
                 .catch(() => checks.push({ name: 'Ollama Connection', status: '✗ FAILED', failed: true }))
@@ -549,7 +656,6 @@
             function continueChecks() {
                 if (checks.length < 1) return;
 
-                // Check 2: Proxy connection
                 fetch(PROXY_HOST + '/health', { method: 'GET', mode: 'no-cors' })
                     .then(() => checks.push({ name: 'Proxy Connection', status: '✓ OK', failed: false }))
                     .catch(() => checks.push({ name: 'Proxy Connection', status: '✓ OK (assumed)', failed: false }))
@@ -559,7 +665,6 @@
             function finishChecks() {
                 if (checks.length < 2) return;
 
-                // Additional checks
                 checks.push({ name: 'Storage Security', status: '✓ OK', failed: false });
                 checks.push({ name: 'CORS Configuration', status: '✓ Enabled', failed: false });
                 checks.push({ name: 'File Protocol Sandbox', status: '✓ Isolated', failed: false });
@@ -648,7 +753,6 @@
             div.innerHTML = `<div class="response-label">${label}</div><div>${text}</div>`;
             responses.appendChild(div);
             
-            // Auto-scroll to bottom
             setTimeout(() => {
                 responses.scrollTop = responses.scrollHeight;
             }, 0);
