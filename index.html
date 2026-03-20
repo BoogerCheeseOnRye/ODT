@@ -1505,18 +1505,20 @@ Be practical and actionable.`;
                 const text = el.querySelector('div:last-child').textContent;
                 history.push({ label, text });
             });
-            localStorage.setItem('chatHistory', JSON.stringify(history));
+            
+            // Save per project
+            const project = projects.find(p => p.id === activeProject);
+            if (project) {
+                project.chatHistory = history;
+                localStorage.setItem('projects', JSON.stringify(projects));
+            }
         }
 
         function loadChatHistory() {
-            const saved = localStorage.getItem('chatHistory');
-            if (saved) {
-                try {
-                    const history = JSON.parse(saved);
-                    history.forEach(msg => addResponse(msg.label, msg.text));
-                } catch (e) {
-                    console.error('Error loading chat history', e);
-                }
+            // Load from current project
+            const project = projects.find(p => p.id === activeProject);
+            if (project && project.chatHistory && project.chatHistory.length > 0) {
+                project.chatHistory.forEach(msg => addResponse(msg.label, msg.text));
             }
         }
 
@@ -1835,9 +1837,58 @@ Be practical and actionable.`;
             updateHeaderProjectName();
         }
 
+
+        // Save editor state
+        function saveEditorState() {
+            const editorState = {
+                openFiles: openFiles,
+                currentFilePath: currentEditorFile?.path,
+                editorContent: {}
+            };
+            
+            openFiles.forEach(file => {
+                editorState.editorContent[file.path] = {
+                    content: file.content,
+                    modified: file.modified
+                };
+            });
+            
+            localStorage.setItem('editorState', JSON.stringify(editorState));
+        }
+
+        // Restore editor state
+        function restoreEditorState() {
+            const saved = localStorage.getItem('editorState');
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    openFiles = state.openFiles || [];
+                    
+                    if (state.currentFilePath) {
+                        currentEditorFile = openFiles.find(f => f.path === state.currentFilePath);
+                    }
+                    
+                    if (openFiles.length > 0) {
+                        renderEditorTabs();
+                        updateEditorDisplay();
+                    }
+                } catch (e) {
+                    console.error('Error restoring editor state', e);
+                }
+            }
+        }
+
+        // Hook save functions
+        const oldSaveEditor = saveEditorFile;
+        saveEditorFile = function() {
+            oldSaveEditor.call(this);
+            saveEditorState();
+        };
+
         // Start
         init();
         initProjects();
+        restoreEditorState();
     
         // Model scanning
         async function scanForModels() {
