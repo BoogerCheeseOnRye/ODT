@@ -363,34 +363,7 @@
             font-size: 10px;
         }
         
-        .editor-toggle {
-            position: fixed;
-            left: 10px;
-            bottom: 20px;
-            width: 40px;
-            height: 40px;
-            background: #1f2937;
-            border: 1px solid #374151;
-            border-radius: 5px;
-            cursor: pointer;
-            color: #58a6ff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 400;
-            font-size: 18px;
-            transition: all 0.2s;
-        }
         
-        .editor-toggle:hover {
-            background: #374151;
-            border-color: #4b5563;
-        }
-
-        @media (max-width: 768px) {
-            .editor-panel { width: 100%; left: -100%; }
-            .editor-toggle { bottom: 60px; }
-        }
 
         /* Tablet/Mobile Breakpoints */
         @media (max-width: 1024px) {
@@ -403,6 +376,7 @@
         }
 
         @media (max-width: 768px) {
+            .editor-panel { width: 100%; left: -100%; }
             body { font-size: 11px; }
             .header { padding: 8px; min-height: 36px; }
             .header h1 { font-size: 11px; }
@@ -537,7 +511,7 @@
             <button class="model-btn" onclick="closeEditor()">Close</button>
         </div>
     </div>
-    <button class="editor-toggle" id="editorToggle" onclick="toggleEditor()" title="Open/Close Editor">📝</button>
+    
 
     <!-- Settings Modal -->
     <div id="settingsModal" class="modal">
