@@ -730,6 +730,39 @@
     </div>
     
 
+    <!-- Hardware Profile Modal -->
+    <div id="hardwareModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <span>System Hardware Profile</span>
+                <button class="modal-close" onclick="closeHardwareModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 12px;">
+                    <div style="color: #58a6ff; font-weight: 600; margin-bottom: 8px; font-size: 11px;">Device Information</div>
+                    <div id="hardwareInfo" style="background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 8px; font-size: 10px; line-height: 1.8; color: #c9d1d9; font-family: 'Courier New', monospace;">
+                        <div>Detecting hardware...</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <div style="color: #58a6ff; font-weight: 600; margin-bottom: 8px; font-size: 11px;">Optimization</div>
+                    <div style="background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 8px; font-size: 10px; line-height: 1.8; color: #c9d1d9;">
+                        <div>Browser: <span id="hardwareBrowser">—</span></div>
+                        <div>GPU: <span id="hardwareGPU">—</span></div>
+                        <div>Recommended FPS: <span id="hardwareFPS" style="color: #58a6ff; font-weight: 600;">—</span></div>
+                        <div>Profile: <span id="hardwareProfile" style="color: #58a6ff; font-weight: 600;">—</span></div>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid #30363d; padding-top: 12px;">
+                    <button class="model-btn" style="width: 100%; background: #3b82f6; border-color: #1d4ed8; color: #fff; margin-bottom: 6px;" onclick="applyHardwareOptimization()">Apply Optimization</button>
+                    <button class="model-btn" style="width: 100%;" onclick="closeHardwareModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 3D Preview Diagnostics Modal -->
     <div id="diagnosticsModal" class="modal">
         <div class="modal-content" style="max-width: 500px; max-height: 90vh;">
@@ -760,6 +793,10 @@
                 <button class="modal-close" onclick="closeSettingsModal()">✕</button>
             </div>
             <div class="modal-body">
+                <div style="margin-bottom: 12px;">
+                    <button class="model-btn" style="width: 100%; background: #6b7280; border-color: #4b5563; color: #fff; margin-bottom: 8px;" onclick="openHardwareModal()">📱 Hardware Profile</button>
+                </div>
+
                 <div class="section-label">Preview Performance</div>
                 
                 <div style="margin-bottom: 12px;">
@@ -1925,7 +1962,8 @@ Be practical and actionable.`;
                 timestamp: new Date().toLocaleTimeString(),
                 tests: [],
                 passed: 0,
-                failed: 0
+                failed: 0,
+                hardware: hardwareProfile
             };
 
             // Test 1: WebGL Support
@@ -2094,10 +2132,179 @@ Be practical and actionable.`;
             `;
         }
 
+
+        // Hardware Detection
+        let hardwareProfile = {
+            gpu: 'Unknown',
+            gpuVersion: 'Unknown',
+            cpu: 'Unknown',
+            cores: 'Unknown',
+            ram: 'Unknown',
+            screen: 'Unknown',
+            dpi: 'Unknown',
+            browser: 'Unknown',
+            browserVersion: 'Unknown',
+            connection: 'Unknown',
+            recommendedFPS: 60,
+            profile: 'Balanced',
+            detected: false
+        };
+
+        function detectHardware() {
+            // GPU/WebGL Detection
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (debugInfo) {
+                        hardwareProfile.gpu = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                        hardwareProfile.gpuVersion = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                    }
+                    hardwareProfile.gpu = gl.getParameter(gl.RENDERER);
+                }
+            } catch (e) {
+                hardwareProfile.gpu = 'WebGL Error: ' + e.message;
+            }
+
+            // CPU/System Detection
+            try {
+                hardwareProfile.cores = navigator.hardwareConcurrency || 'Unknown';
+                hardwareProfile.ram = navigator.deviceMemory ? navigator.deviceMemory + 'GB' : 'Unknown';
+            } catch (e) {
+                // fallback
+            }
+
+            // Screen/DPI Detection
+            try {
+                hardwareProfile.screen = window.innerWidth + 'x' + window.innerHeight;
+                hardwareProfile.dpi = Math.round(window.devicePixelRatio * 96) + ' DPI';
+            } catch (e) {
+                // fallback
+            }
+
+            // Browser Detection
+            try {
+                const ua = navigator.userAgent;
+                if (ua.indexOf('Chrome') > -1) {
+                    hardwareProfile.browser = 'Chrome';
+                    hardwareProfile.browserVersion = ua.match(/Chrome\/(\d+)/)?.[1] || 'Unknown';
+                } else if (ua.indexOf('Firefox') > -1) {
+                    hardwareProfile.browser = 'Firefox';
+                    hardwareProfile.browserVersion = ua.match(/Firefox\/(\d+)/)?.[1] || 'Unknown';
+                } else if (ua.indexOf('Safari') > -1) {
+                    hardwareProfile.browser = 'Safari';
+                    hardwareProfile.browserVersion = ua.match(/Version\/(\d+)/)?.[1] || 'Unknown';
+                } else if (ua.indexOf('Edge') > -1) {
+                    hardwareProfile.browser = 'Edge';
+                    hardwareProfile.browserVersion = ua.match(/Edge\/(\d+)/)?.[1] || 'Unknown';
+                } else {
+                    hardwareProfile.browser = 'Other';
+                }
+            } catch (e) {
+                // fallback
+            }
+
+            // Network Detection
+            try {
+                if (navigator.connection) {
+                    hardwareProfile.connection = navigator.connection.effectiveType;
+                }
+            } catch (e) {
+                // fallback
+            }
+
+            // Auto-optimize FPS based on hardware
+            try {
+                const gpu = hardwareProfile.gpu.toLowerCase();
+                const cores = parseInt(hardwareProfile.cores) || 4;
+                const ram = parseInt(hardwareProfile.ram) || 8;
+
+                if (gpu.includes('nvidia') || gpu.includes('rtx') || gpu.includes('gtx')) {
+                    hardwareProfile.profile = 'High Performance';
+                    hardwareProfile.recommendedFPS = 120;
+                } else if (gpu.includes('amd') || gpu.includes('radeon')) {
+                    hardwareProfile.profile = 'High Performance';
+                    hardwareProfile.recommendedFPS = 90;
+                } else if (gpu.includes('intel')) {
+                    hardwareProfile.profile = 'Balanced';
+                    hardwareProfile.recommendedFPS = 60;
+                } else if (gpu.includes('apple') || gpu.includes('metal')) {
+                    hardwareProfile.profile = 'Balanced';
+                    hardwareProfile.recommendedFPS = 60;
+                } else {
+                    hardwareProfile.profile = 'Conservative';
+                    hardwareProfile.recommendedFPS = 30;
+                }
+
+                // Adjust based on cores and RAM
+                if (cores < 4 || ram < 8) {
+                    hardwareProfile.recommendedFPS = Math.max(30, hardwareProfile.recommendedFPS - 30);
+                    hardwareProfile.profile = 'Conservative';
+                }
+            } catch (e) {
+                hardwareProfile.profile = 'Balanced';
+                hardwareProfile.recommendedFPS = 60;
+            }
+
+            hardwareProfile.detected = true;
+            localStorage.setItem('hardwareProfile', JSON.stringify(hardwareProfile));
+        }
+
+        function displayHardwareProfile() {
+            const info = document.getElementById('hardwareInfo');
+            info.innerHTML = `
+                <div>GPU: ${hardwareProfile.gpu}</div>
+                <div>GPU Vendor: ${hardwareProfile.gpuVersion}</div>
+                <div>CPU Cores: ${hardwareProfile.cores}</div>
+                <div>System RAM: ${hardwareProfile.ram}</div>
+                <div>Screen: ${hardwareProfile.screen}</div>
+                <div>Pixel Ratio: ${hardwareProfile.dpi}</div>
+                <div>Browser: ${hardwareProfile.browser} v${hardwareProfile.browserVersion}</div>
+                <div>Connection: ${hardwareProfile.connection || 'Unknown'}</div>
+            `;
+
+            document.getElementById('hardwareBrowser').textContent = hardwareProfile.browser + ' ' + hardwareProfile.browserVersion;
+            document.getElementById('hardwareGPU').textContent = hardwareProfile.gpu.substring(0, 50);
+            document.getElementById('hardwareFPS').textContent = hardwareProfile.recommendedFPS + ' FPS';
+            document.getElementById('hardwareProfile').textContent = hardwareProfile.profile;
+        }
+
+        function openHardwareModal() {
+            document.getElementById('hardwareModal').classList.add('active');
+            displayHardwareProfile();
+        }
+
+        function closeHardwareModal() {
+            document.getElementById('hardwareModal').classList.remove('active');
+        }
+
+        function applyHardwareOptimization() {
+            targetFPS = hardwareProfile.recommendedFPS;
+            localStorage.setItem('targetFPS', targetFPS);
+            document.getElementById('fpsSlider').value = targetFPS;
+            document.getElementById('fpsValueDisplay').textContent = targetFPS;
+            addResponse('System', `Applied hardware optimization: ${hardwareProfile.recommendedFPS} FPS (${hardwareProfile.profile})`);
+            closeHardwareModal();
+        }
+
+        // Show hardware modal on first load (if never seen)
+        function showHardwareProfileOnFirstLoad() {
+            const hasSeenHardwareProfile = localStorage.getItem('hasSeenHardwareProfile');
+            if (!hasSeenHardwareProfile && hardwareProfile.detected) {
+                localStorage.setItem('hasSeenHardwareProfile', 'true');
+                setTimeout(() => {
+                    openHardwareModal();
+                }, 1000);
+            }
+        }
+
         // Start
+        detectHardware();
         init();
         initProjects();
         restoreEditorState();
+        showHardwareProfileOnFirstLoad();
     
         // Model scanning
         async function scanForModels() {
