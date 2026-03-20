@@ -53,11 +53,77 @@
         .center-panel { flex: 1; background: #0d1117; display: flex; flex-direction: column; border-right: 1px solid #30363d; position: relative; min-width: 0; }
         .code-header { background: #161b22; padding: 8px 12px; border-bottom: 1px solid #30363d; font-weight: 600; font-size: 11px; color: #58a6ff; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
         .code-header.hidden { display: none; }
-        .fullscreen-btn { background: none; border: none; color: #58a6ff; cursor: pointer; font-size: 12px; padding: 4px; width: auto; min-height: 32px; min-width: 32px; }
-        .fullscreen-btn:hover { color: #93c5fd; }
+        
         .code-area { flex: 1; overflow: auto; padding: 12px; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; color: #8b949e; min-height: 0; }
+        .code-header { display: none !important; }
+        
+        /* Fullscreen button - dashed corners in upper right */
+        .fullscreen-corner {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            background: none;
+            border: none;
+            color: #58a6ff;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+            transition: color 0.2s;
+            z-index: 150;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .fullscreen-corner:hover {
+            color: #93c5fd;
+        }
+        
+        /* Dashed corner style */
+        .fullscreen-corner::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 2px;
+            right: 2px;
+            border-top: 2px dashed #58a6ff;
+            border-right: 2px dashed #58a6ff;
+            border-bottom: none;
+            border-left: none;
+            pointer-events: none;
+        }
+        
+        .fullscreen-corner::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            bottom: 2px;
+            left: 2px;
+            border-bottom: 2px dashed #58a6ff;
+            border-left: 2px dashed #58a6ff;
+            border-top: none;
+            border-right: none;
+            pointer-events: none;
+        }
+        
         
         #preview3d { width: 100%; height: 100%; background: #0d1117; display: block; }
+        
+        body.fullscreen .fullscreen-corner {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        .center-panel.fullscreen #preview3d {
+            width: 100vw;
+            height: 100vh;
+        }
         .preview-stats { position: fixed; top: 10px; left: 10px; font-family: 'Courier New', monospace; font-size: 11px; color: #58a6ff; line-height: 1.5; z-index: 100; pointer-events: none; white-space: nowrap; font-weight: 600; letter-spacing: 0.5px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); }
         
         .right-panel { flex: 0 0 300px; background: #0d1117; border-left: 1px solid #30363d; display: flex; flex-direction: column; min-width: 0; }
@@ -364,11 +430,9 @@
             </div>
 
             <div class="center-panel">
-                <div class="code-header" id="code-header">
-                    <span>3D Preview / Status</span>
-                    <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Toggle fullscreen (F)">⛶</button>
-                </div>
+                
                 <canvas id="preview3d"></canvas>
+            <button class="fullscreen-corner" onclick="toggleFullscreen()" title="Toggle fullscreen (F)"></button>
             </div>
 
             <div class="right-panel" id="right-panel">
@@ -594,7 +658,7 @@
             const header = document.getElementById('header');
             const leftPanel = document.getElementById('left-panel');
             const rightPanel = document.getElementById('right-panel');
-            const codeHeader = document.getElementById('code-header');
+            const centerPanel = document.querySelector('.center-panel');
             
             isFullscreen = !isFullscreen;
             
@@ -602,13 +666,13 @@
                 header.classList.add('hidden');
                 leftPanel.classList.add('hidden');
                 rightPanel.classList.add('hidden');
-                codeHeader.classList.add('hidden');
+                centerPanel.classList.add('fullscreen');
                 addResponse('System', 'Fullscreen mode. Press F to exit.');
             } else {
                 header.classList.remove('hidden');
                 leftPanel.classList.remove('hidden');
                 rightPanel.classList.remove('hidden');
-                codeHeader.classList.remove('hidden');
+                centerPanel.classList.remove('fullscreen');
             }
 
             // Trigger resize event for canvas
