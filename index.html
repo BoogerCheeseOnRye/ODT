@@ -396,6 +396,7 @@
                 <button class="header-btn" onclick="openModelsModal()" title="Models">📦</button>
                 <button class="header-btn" onclick="openPathsModal()" title="Paths">📂</button>
                 <button class="header-btn" onclick="runOptimize()" title="Optimize">⚙️</button>
+                <button class="header-btn" onclick="openSettingsModal()" title="Settings">⚙️ Settings</button>
             </div>
             <div class="header-status" id="header-status">
                 <span>Ollama</span>
@@ -456,6 +457,51 @@
         </div>
     </div>
     <button class="editor-toggle" id="editorToggle" onclick="toggleEditor()" title="Open/Close Editor">📝</button>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Settings</span>
+                <button class="modal-close" onclick="closeSettingsModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="section-label">Preview Performance</div>
+                
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; margin-bottom: 6px; color: #c9d1d9; font-size: 11px;">
+                        Target FPS: <span id="fpsValueDisplay">60</span>
+                    </label>
+                    <input type="range" id="fpsSlider" min="1" max="120" value="60" style="width: 100%; cursor: pointer;" onchange="setTargetFPS(this.value)">
+                    <div style="display: flex; justify-content: space-between; font-size: 9px; color: #6b7280; margin-top: 4px;">
+                        <span>1 FPS</span>
+                        <span>60 FPS</span>
+                        <span>120 FPS</span>
+                    </div>
+                </div>
+
+                <div style="background: #0d1117; border: 1px solid #30363d; border-radius: 4px; padding: 8px; margin-bottom: 12px;">
+                    <div style="color: #58a6ff; font-weight: 600; font-size: 10px; margin-bottom: 4px;">Current Stats</div>
+                    <div style="color: #8b949e; font-size: 10px; line-height: 1.6;">
+                        <div>Target FPS: <span id="settingsFpsTarget">60</span></div>
+                        <div>Actual FPS: <span id="settingsFpsActual">0</span></div>
+                        <div>Frame Time: <span id="settingsFrameTime">0.00</span>ms</div>
+                    </div>
+                </div>
+
+                <div class="section-label">Display Options</div>
+                
+                <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+                    <input type="checkbox" id="statsToggle" checked onchange="toggleStatsDisplay()">
+                    <span style="color: #c9d1d9; font-size: 11px;">Show FPS Stats</span>
+                </label>
+
+                <div style="border-top: 1px solid #30363d; padding-top: 12px;">
+                    <button class="model-btn" style="width: 100%; background: #3b82f6; border-color: #1d4ed8; color: #fff;" onclick="closeSettingsModal()">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Models Modal -->
     <div id="modelsModal" class="modal">
@@ -1310,6 +1356,54 @@ Be practical and actionable.`;
                 openFileInEditor(file);
             }
         };
+
+
+        // Settings Management
+        let targetFPS = parseInt(localStorage.getItem('targetFPS')) || 60;
+        let lastFrameTime = 0;
+        let showStats = localStorage.getItem('showStats') !== 'false';
+
+        function openSettingsModal() {
+            document.getElementById('settingsModal').classList.add('active');
+            updateSettingsDisplay();
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function setTargetFPS(value) {
+            targetFPS = parseInt(value);
+            localStorage.setItem('targetFPS', targetFPS);
+            document.getElementById('fpsValueDisplay').textContent = targetFPS;
+            document.getElementById('settingsFpsTarget').textContent = targetFPS;
+            addResponse('System', `FPS target set to: ${targetFPS}`);
+        }
+
+        function toggleStatsDisplay() {
+            showStats = document.getElementById('statsToggle').checked;
+            localStorage.setItem('showStats', showStats);
+            const statsOverlay = document.querySelector('.preview-stats');
+            if (statsOverlay) {
+                statsOverlay.style.display = showStats ? 'block' : 'none';
+            }
+            addResponse('System', showStats ? 'Stats display: ON' : 'Stats display: OFF');
+        }
+
+        function updateSettingsDisplay() {
+            document.getElementById('fpsSlider').value = targetFPS;
+            document.getElementById('fpsValueDisplay').textContent = targetFPS;
+            document.getElementById('settingsFpsTarget').textContent = targetFPS;
+            document.getElementById('statsToggle').checked = showStats;
+        }
+
+        // Update settings stats display
+        function updateSettingsStats(currentFPS, frameTime) {
+            const actualDisplay = document.getElementById('settingsFpsActual');
+            const frameDisplay = document.getElementById('settingsFrameTime');
+            if (actualDisplay) actualDisplay.textContent = currentFPS;
+            if (frameDisplay) frameDisplay.textContent = frameTime.toFixed(2);
+        }
 
         // Start
         init();
