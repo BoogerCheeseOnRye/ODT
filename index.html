@@ -399,6 +399,177 @@
             .preview-stats { font-size: 9px; padding: 6px; top: 5px; left: 5px; }
         }
 
+        
+        /* Left Sidebar */
+        .sidebar {
+            position: fixed;
+            left: -280px;
+            top: 40px;
+            width: 280px;
+            height: calc(100vh - 40px);
+            background: #0d1117;
+            border-right: 1px solid #30363d;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            transition: left 0.3s ease;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.5);
+        }
+        
+        .sidebar.open { left: 0; }
+        
+        .sidebar-header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-title {
+            color: #58a6ff;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .sidebar-close {
+            background: none;
+            border: none;
+            color: #58a6ff;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+        }
+        
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 12px;
+        }
+        
+        .sidebar-section-title {
+            color: #58a6ff;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 8px 8px 4px;
+            opacity: 0.8;
+        }
+        
+        .project-item {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .project-item:hover {
+            background: #1f2937;
+            border-color: #4b5563;
+        }
+        
+        .project-item.active {
+            background: #1e3a4c;
+            border-color: #2d5a7b;
+            color: #58a6ff;
+        }
+        
+        .project-name {
+            flex: 1;
+            font-size: 11px;
+            color: #c9d1d9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .project-item.active .project-name {
+            color: #58a6ff;
+            font-weight: 600;
+        }
+        
+        .project-delete {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 0;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .project-item:hover .project-delete {
+            opacity: 1;
+        }
+        
+        .project-delete:hover {
+            color: #f87171;
+        }
+        
+        .sidebar-footer {
+            background: #161b22;
+            border-top: 1px solid #30363d;
+            padding: 8px;
+            flex-shrink: 0;
+        }
+        
+        .new-project-btn {
+            width: 100%;
+            background: #1f2937;
+            color: #e5e7eb;
+            border: 1px solid #374151;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        
+        .new-project-btn:hover {
+            background: #374151;
+            border-color: #4b5563;
+        }
+        
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: #58a6ff;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 6px 10px;
+            min-height: 32px;
+        }
+        
+        .sidebar-toggle:hover {
+            color: #93c5fd;
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar { width: 100%; left: -100%; }
+        }
+
         @media (max-width: 480px) {
             .header { padding: 6px; min-height: 32px; }
             .header h1 { font-size: 10px; }
@@ -429,6 +600,7 @@
         <div class="header" id="header">
             <h1>TEoAAAG</h1>
             <div class="header-buttons">
+                <button class="sidebar-toggle" onclick="toggleSidebar()" title="Projects">📋</button>
                 <button class="header-btn" onclick="openModelsModal()" title="Models">📦</button>
                 <button class="header-btn" onclick="openPathsModal()" title="Paths">📂</button>
                 <button class="header-btn" onclick="runOptimize()" title="Optimize">⚙️</button>
@@ -494,6 +666,43 @@
             <div class="right-panel" id="right-panel">
                 <div class="files-header">Files</div>
                 <div class="file-tree" id="file-tree"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-title">Projects</span>
+            <button class="sidebar-close" onclick="toggleSidebar()">✕</button>
+        </div>
+        <div class="sidebar-content">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Active</div>
+                <div id="projectsList"></div>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <button class="new-project-btn" onclick="openNewProjectModal()">+ New Project</button>
+        </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div id="newProjectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Create New Project</span>
+                <button class="modal-close" onclick="closeNewProjectModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; margin-bottom: 6px; color: #c9d1d9; font-size: 11px;">Project Name</label>
+                    <input type="text" id="projectNameInput" class="modal-input" placeholder="e.g., React Todo App">
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button class="model-btn" style="flex: 1; background: #3b82f6; border-color: #1d4ed8; color: #fff;" onclick="createNewProject()">Create</button>
+                    <button class="model-btn" onclick="closeNewProjectModal()" style="flex: 1;">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1486,8 +1695,127 @@ Be practical and actionable.`;
             if (frameDisplay) frameDisplay.textContent = frameTime.toFixed(2);
         }
 
+
+        // Project Management
+        let projects = JSON.parse(localStorage.getItem('projects')) || [
+            { id: 'main', name: 'Main', chatHistory: [], threads: [] }
+        ];
+        let activeProject = localStorage.getItem('activeProject') || 'main';
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        function renderProjects() {
+            const list = document.getElementById('projectsList');
+            list.innerHTML = projects.map(p => `
+                <div class="project-item ${p.id === activeProject ? 'active' : ''}" onclick="switchProject('${p.id}')">
+                    <span class="project-name">${p.name}</span>
+                    <button class="project-delete" onclick="deleteProject('${p.id}'); event.stopPropagation();">×</button>
+                </div>
+            `).join('');
+        }
+
+        function switchProject(projectId) {
+            // Save current project's chat history
+            const currentProject = projects.find(p => p.id === activeProject);
+            if (currentProject) {
+                const responses = document.getElementById('chat-responses');
+                currentProject.chatHistory = Array.from(responses.querySelectorAll('.response')).map(el => ({
+                    label: el.querySelector('.response-label').textContent,
+                    text: el.querySelector('div:last-child').textContent
+                }));
+            }
+
+            activeProject = projectId;
+            localStorage.setItem('activeProject', projectId);
+
+            // Load project's chat history
+            const newProject = projects.find(p => p.id === projectId);
+            const responses = document.getElementById('chat-responses');
+            responses.innerHTML = '';
+            
+            if (newProject && newProject.chatHistory.length > 0) {
+                newProject.chatHistory.forEach(msg => addResponse(msg.label, msg.text));
+            } else {
+                addResponse('System', `Switched to project: ${newProject.name}`);
+            }
+
+            renderProjects();
+            updateHeaderProjectName();
+            toggleSidebar();
+        }
+
+        function openNewProjectModal() {
+            document.getElementById('newProjectModal').classList.add('active');
+            document.getElementById('projectNameInput').focus();
+        }
+
+        function closeNewProjectModal() {
+            document.getElementById('newProjectModal').classList.remove('active');
+        }
+
+        function createNewProject() {
+            const name = document.getElementById('projectNameInput').value.trim();
+            if (!name) {
+                addResponse('Error', 'Project name cannot be empty');
+                return;
+            }
+
+            const newProject = {
+                id: 'project-' + Date.now(),
+                name: name,
+                chatHistory: [],
+                threads: []
+            };
+
+            projects.push(newProject);
+            localStorage.setItem('projects', JSON.stringify(projects));
+            
+            closeNewProjectModal();
+            renderProjects();
+            switchProject(newProject.id);
+            addResponse('System', `Created new project: ${name}`);
+        }
+
+        function deleteProject(projectId) {
+            if (projectId === 'main') {
+                addResponse('Error', 'Cannot delete main project');
+                return;
+            }
+
+            if (confirm('Delete this project?')) {
+                projects = projects.filter(p => p.id !== projectId);
+                localStorage.setItem('projects', JSON.stringify(projects));
+                
+                if (activeProject === projectId) {
+                    switchProject('main');
+                } else {
+                    renderProjects();
+                }
+                
+                addResponse('System', 'Project deleted');
+            }
+        }
+
+        function updateHeaderProjectName() {
+            const project = projects.find(p => p.id === activeProject);
+            const title = document.querySelector('.header h1');
+            if (title && project) {
+                title.textContent = 'TEoAAAG • ' + project.name;
+            }
+        }
+
+        // Initialize projects on load
+        function initProjects() {
+            renderProjects();
+            updateHeaderProjectName();
+        }
+
         // Start
         init();
+        initProjects();
     
         // Model scanning
         async function scanForModels() {
