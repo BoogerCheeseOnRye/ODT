@@ -1,119 +1,143 @@
-# ODT v2.0 - Quick Reference Card
+# TEoAAAG - Quick Reference Card
 
-## ⚡ Quick Start (Copy & Paste)
+## One-Time Setup (5 minutes)
 
-```
-Step 1 - Setup (first time only):
-  npm install
+```powershell
+# 1. Set Ollama environment (Windows)
+Settings → Environment Variables
+  ADD: OLLAMA_MODELS = E:\models
+  ADD: OLLAMA_CACHE = E:\cache
+  Restart Ollama
 
-Step 2 - Terminal A (Ollama):
-  ollama serve
+# 2. Create model directory
+mkdir E:\models
 
-Step 3 - Terminal B (Proxy):
-  npm start
+# 3. Start Ollama
+ollama serve
 
-Step 4 - Browser:
-  file:///E:/ODTV2/index.html
-```
-
-## 🎯 First Model
-
-```bash
-# Fast (recommended for first time)
-ollama pull phi:2.7b
-
-# Or larger/better
-ollama pull qwen2.5:7b
+# 4. In NEW terminal, start dashboard
+cd E:\dashboard-appv2
+start-dashboard-isolated.bat
 ```
 
-## 🔧 Most Used Commands
+## Daily Startup
 
-| Command | What It Does |
-|---------|------------|
-| `ollama serve` | Start Ollama |
-| `ollama pull phi:2.7b` | Download model |
-| `ollama list` | See installed models |
-| `npm start` | Start proxy |
-| `npm install` | Install dependencies |
+```batch
+# Terminal 1: Ollama
+ollama serve
 
-## 🪟 Windows Shortcuts
-
-| File | Action |
-|------|--------|
-| `SETUP.bat` | First-time setup |
-| `START-ODT.bat` | Launch ODT |
-| `dev-env-standalone.bat` | Alternative launcher |
-
-## 💬 Keyboard Shortcuts in Dashboard
-
-| Shortcut | Action |
-|----------|--------|
-| `Ctrl+Enter` | Send chat message |
-| `F` | Toggle fullscreen |
-| `Ctrl+S` | Save file |
-
-## 📋 Dashboard Buttons
-
-| Icon | Function |
-|------|----------|
-| 📋 | Projects |
-| 📦 | Models |
-| 📂 | Paths |
-| ⚙️ | Settings |
-| ⚡ | Optimize |
-
-## 🆘 If Something Breaks
-
-```
-1. Check F12 console for errors
-2. Restart Ollama (Ctrl+C, then ollama serve)
-3. Restart proxy (Ctrl+C, then npm start)
-4. Refresh browser (Ctrl+R)
-5. Clear cache (Ctrl+Shift+Delete)
-6. Try different model
+# Terminal 2: Dashboard
+cd E:\dashboard-appv2
+start-dashboard-isolated.bat
 ```
 
-## 📊 System Check
+Then open: **http://localhost:8080**
 
-**Minimum to run:**
-- Windows 7+
-- Node.js 16+
-- Ollama installed
-- 4GB RAM
-- 5GB disk
+## Model Management
 
-**For good performance:**
-- Windows 10+
-- 8GB+ RAM
-- 4+ cores
-- Modern GPU
+**Add Model:**
+1. Copy `.gguf` file to `E:\models\`
+2. Dashboard → "📦 Models" → "🔍 Scan"
+3. Click "Import"
 
-## 📞 Common Issues
+**List Models:**
+1. Dashboard → "📦 Models"
+2. Scroll to "Loaded Models"
+
+**Delete Model:**
+1. Delete `.gguf` from `E:\models\`
+2. Restart Ollama
+
+## Directories
+
+| Path | Purpose | Contents |
+|------|---------|----------|
+| `E:\models` | Model storage | `.gguf` files |
+| `E:\cache` | Ollama cache | Auto-managed |
+| `E:\dashboard-appv2` | App folder | Code only |
+
+## URL
+
+- **Dashboard:** http://localhost:8080
+- **Proxy:** http://localhost:9001
+- **Ollama:** http://localhost:11434
+
+## Security (What's Protected)
+
+✓ App folder cannot store models
+✓ Models must be in `E:\models`
+✓ Path validation prevents escapes
+✓ HTTP 403 if wrong path
+
+## Common Tasks
+
+| Task | Steps |
+|------|-------|
+| Change model | Chat selector in dashboard |
+| View settings | ⚙️ Settings button |
+| Scan new models | 📦 Models → 🔍 Scan |
+| Clear chat | Chat panel → Clear button |
+| Fullscreen preview | F key or corner button |
+| Show stats | ⚙️ Stats toggle |
+
+## If Something's Wrong
 
 | Problem | Solution |
 |---------|----------|
-| "ollama: command not found" | Install Ollama from ollama.ai |
-| "Cannot connect to Ollama" | Run `ollama serve` |
-| "Proxy connection failed" | Run `npm start` |
-| "No models found" | Run `ollama pull phi:2.7b` |
-| Dashboard looks broken | Hard refresh: Ctrl+Shift+R |
-| Chat very slow | Try smaller model |
+| "Models not found" | Check `E:\models` exists, rescan |
+| "Ollama unavailable" | Start: `ollama serve` |
+| "Port 9001 in use" | Kill other app using that port |
+| "Forbidden model" | Verify model in `E:\models`, not app folder |
+| Models disappeared | Restart Ollama |
 
-## 📚 Documentation
+## Environment Variables (PowerShell)
 
-- **README.md** - Full documentation
-- **GETTING-STARTED.md** - Step-by-step guide
-- **This file** - Quick reference
+```powershell
+# Check current settings
+$env:OLLAMA_MODELS
+$env:OLLAMA_CACHE
 
-## 🚀 You're Ready!
+# Set for session
+$env:OLLAMA_MODELS = "E:\models"
+$env:OLLAMA_CACHE = "E:\cache"
 
-1. Run SETUP.bat
-2. Start Ollama
-3. Pull a model
-4. Open index.html
-5. Create project
-6. Start building!
+# Verify
+Get-ChildItem env:OLLAMA_*
+```
+
+## File Locations
+
+```
+E:\
+├── dashboard-appv2/          ← APP (code only)
+│   ├── index.html            ← UI
+│   ├── server.js             ← Backend
+│   ├── proxy.js              ← CORS proxy
+│   └── start-dashboard-isolated.bat
+│
+├── models/                   ← MODELS (external)
+│   ├── qwen2.5-7b.gguf
+│   └── mistral-7b.gguf
+│
+└── cache/                    ← CACHE
+    └── (auto-managed)
+```
+
+## Key Points
+
+1. **Models go in E:\models** - NOT in app folder
+2. **Set OLLAMA_MODELS before Ollama starts** - Required for external directory
+3. **Use startup scripts** - Auto-configures environment
+4. **App folder stays clean** - Models isolated externally
+5. **Validation prevents mistakes** - HTTP 403 if wrong path
+
+## Contact / Help
+
+See detailed guides:
+- `MODEL-ISOLATION-SETUP.md` - Complete setup
+- `MODEL-ISOLATION-VERIFICATION.md` - Technical details
+- `IMPLEMENTATION-SUMMARY.md` - Implementation info
 
 ---
 
-**Questions?** Check README.md
+**Remember:** Models in `E:\models`, App in `E:\dashboard-appv2` ✓

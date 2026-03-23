@@ -1,0 +1,105 @@
+# Quick Start: ODT with Dynamic Drives
+
+## First Launch (Sets Up Everything)
+
+```bash
+cd E:\dashboard-appv2
+node server.js
+```
+
+**You will see:**
+1. Setup wizard appears in browser: `http://localhost:8080`
+2. Click "Continue"
+3. Select your drive (E, C, D, etc.)
+4. Confirm paths
+5. Dashboard loads
+
+**Behind the scenes:**
+- Creates: `X:\odt-data\models\`
+- Creates: `X:\odt-data\cache\`
+- Creates: `X:\odt-data\ollama\`
+- Saves config: `%USERPROFILE%\.odt\config.json`
+
+## Consolidate Scattered Models (Optional)
+
+**Scenario:** You have models scattered across your 5TB E: drive
+
+```bash
+REM Step 1: Find what you have
+cd E:\dashboard-appv2
+scan-drive.bat E
+
+REM Step 2: Consolidate (removes duplicates)
+consolidate-models.bat E E:\odt-data\models
+
+REM Step 3: Start app
+node server.js
+```
+
+**Result:**
+- All models in: `E:\odt-data\models\`
+- Duplicates removed
+- Space freed
+- App ready to use
+
+## Daily Startup
+
+Once configured:
+
+```bash
+node server.js
+```
+
+App loads immediately with your saved drive selection.
+
+## If You Change Your Mind About Drive
+
+```bash
+REM Delete configuration
+del %USERPROFILE%\.odt\config.json
+
+REM Start app
+node server.js
+
+REM Setup wizard runs again - pick new drive
+```
+
+## Tools
+
+### Scan Drive (Find Models & Duplicates)
+```bash
+scan-drive.bat E
+
+Output:
+  E:\scan-results\drive-scan-report.json
+  E:\scan-results\models-found.csv
+```
+
+### Consolidate Models (Move & Deduplicate)
+```bash
+consolidate-models.bat E E:\odt-data\models
+
+Output:
+  [Moved 8 models]
+  [Removed 3 duplicates]
+  [Freed 10.5GB]
+```
+
+## What Gets Created
+
+```
+E:\odt-data\
+├── models\              ← Your models here
+├── cache\               ← Ollama cache
+└── ollama\              ← Ollama data
+```
+
+## Done! Now Use ODT
+
+Open: http://localhost:8080
+
+Start chatting! Models are managed automatically.
+
+---
+
+**Need more details?** See `DRIVE-CONFIG-GUIDE.md`

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEoAAAG - Setup Wizard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #c9d1d9;
+        }
+
+        .container {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            max-width: 600px;
+            width: 90%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            color: #58a6ff;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #8b949e;
+            font-size: 14px;
+        }
+
+        .step {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-title {
+            color: #58a6ff;
+            font-size: 20px;
+            margin-bottom: 24px;
+            font-weight: 600;
+        }
+
+        .drives-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .drive-btn {
+            background: #161b22;
+            border: 2px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 600;
+            color: #8b949e;
+        }
+
+        .drive-btn:hover {
+            background: #1f2937;
+            border-color: #4b5563;
+            color: #e5e7eb;
+        }
+
+        .drive-btn.selected {
+            background: #1e3a4c;
+            border-color: #58a6ff;
+            color: #58a6ff;
+            box-shadow: 0 0 12px rgba(88, 166, 255, 0.3);
+        }
+
+        .drive-letter {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .drive-info {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .info-box {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #8b949e;
+        }
+
+        .info-box strong {
+            color: #58a6ff;
+        }
+
+        .summary-item {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .summary-label {
+            color: #8b949e;
+            font-size: 12px;
+        }
+
+        .summary-value {
+            color: #58a6ff;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        button {
+            flex: 1;
+            background: #1f2937;
+            color: #e5e7eb;
+            border: 1px solid #374151;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        button:hover:not(:disabled) {
+            background: #374151;
+            border-color: #4b5563;
+            color: #f3f4f6;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            border-color: #1d4ed8;
+            color: #fff;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #2563eb;
+            border-color: #1d4ed8;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #58a6ff;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #30363d;
+            border-top-color: #58a6ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #7f1d1d;
+            border: 1px solid #ef4444;
+            color: #fecaca;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .success {
+            background: #064e3b;
+            border: 1px solid #10b981;
+            color: #a7f3d0;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .progress-bar {
+            background: #161b22;
+            height: 4px;
+            border-radius: 2px;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: #3b82f6;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .step-indicator {
+            text-align: center;
+            color: #6b7280;
+            font-size: 12px;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🧠</div>
+            <h1>ODT</h1>
+            <p class="subtitle">Configuration Wizard</p>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- Step 1: Welcome -->
+        <div class="step active" id="step-welcome">
+            <div class="step-title">Welcome to TEoAAAG</div>
+            
+            <div class="info-box">
+                <strong>First-Time Setup</strong><br>
+                <br>
+                This wizard will help you configure TEoAAAG for your system. We'll select a drive where models and cache data will be stored.
+                <br><br>
+                <strong>Note:</strong> Models can be on any drive (C:, D:, E:, etc.). This choice can be changed later.
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="nextStep('welcome', 'drives')">Continue →</button>
+            </div>
+
+            <div class="step-indicator">Step 1 of 4</div>
+        </div>
+
+        <!-- Step 2: Select Drive -->
+        <div class="step" id="step-drives">
+            <div class="step-title">Select Drive</div>
+            
+            <div class="info-box">
+                Choose which drive to use for models and cache. A <strong>teoaaag-data</strong> folder will be created on this drive.
+            </div>
+
+            <div id="drives-loading" class="loading">
+                <div class="spinner"></div>
+                <div>Detecting drives...</div>
+            </div>
+
+            <div id="drives-grid" class="drives-grid" style="display: none;"></div>
+
+            <div class="button-group">
+                <button onclick="previousStep('drives', 'welcome')">← Back</button>
+                <button class="btn-primary" id="drive-continue" disabled onclick="nextStep('drives', 'confirm')">Continue →</button>
+            </div>
+
+            <div class="step-indicator">Step 2 of 4</div>
+        </div>
+
+        <!-- Step 3: Confirm Selection -->
+        <div class="step" id="step-confirm">
+            <div class="step-title">Confirm Configuration</div>
+            
+            <div class="info-box">
+                Review the configuration before proceeding. These directories will be created on your selected drive.
+            </div>
+
+            <div id="confirm-summary"></div>
+
+            <div class="button-group">
+                <button onclick="previousStep('confirm', 'drives')">← Back</button>
+                <button class="btn-primary" id="confirm-btn" onclick="initializeSetup()">Initialize →</button>
+            </div>
+
+            <div class="step-indicator">Step 3 of 4</div>
+        </div>
+
+        <!-- Step 4: Complete -->
+        <div class="step" id="step-complete">
+            <div class="step-title">Setup Complete! ✓</div>
+            
+            <div id="complete-message" class="success" style="display: none;"></div>
+
+            <div class="info-box">
+                Configuration saved and directories created. Click "Launch Dashboard" to get started!
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="launchDashboard()">Launch Dashboard →</button>
+            </div>
+
+            <div class="step-indicator">Step 4 of 4</div>
+        </div>
+
+        <!-- Error Display -->
+        <div id="error-message" class="error" style="display: none;"></div>
+    </div>
+
+    <script>
+        let selectedDrive = null;
+        let availableDrives = [];
+        const API_BASE = window.location.protocol + '//' + window.location.hostname + ':' + window.location.port;
+
+        // Initialize on load
+        window.addEventListener('load', async () => {
+            await checkSetupStatus();
+            await loadAvailableDrives();
+        });
+
+        async function checkSetupStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/api/setup/status`);
+                const data = await res.json();
+
+                if (data.status === 'CONFIGURED') {
+                    console.log('[Setup] Already configured, launching dashboard...');
+                    setTimeout(() => launchDashboard(), 1000);
+                }
+            } catch (err) {
+                console.error('[Setup] Error checking status:', err);
+            }
+        }
+
+        async function loadAvailableDrives() {
+            try {
+                const res = await fetch(`${API_BASE}/api/setup/drives`);
+                const data = await res.json();
+                availableDrives = data.drives || [];
+
+                const grid = document.getElementById('drives-grid');
+                const loading = document.getElementById('drives-loading');
+
+                if (availableDrives.length === 0) {
+                    showError('No drives detected. Please check your system.');
+                    return;
+                }
+
+                // Create drive buttons
+                grid.innerHTML = availableDrives.map(drive => `
+                    <button class="drive-btn" onclick="selectDrive('${drive}')">
+                        <div class="drive-letter">${drive}:</div>
+                        <div class="drive-info">Drive</div>
+                    </button>
+                `).join('');
+
+                loading.style.display = 'none';
+                grid.style.display = 'grid';
+
+                // Pre-select first drive if available
+                if (availableDrives.length > 0) {
+                    selectDrive(availableDrives[0]);
+                }
+            } catch (err) {
+                showError(`Error loading drives: ${err.message}`);
+                console.error(err);
+            }
+        }
+
+        function selectDrive(drive) {
+            selectedDrive = drive;
+
+            // Update UI
+            document.querySelectorAll('.drive-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+
+            event.target.closest('.drive-btn').classList.add('selected');
+            document.getElementById('drive-continue').disabled = false;
+        }
+
+        function nextStep(from, to) {
+            updateProgress(to);
+            document.getElementById(`step-${from}`).classList.remove('active');
+            document.getElementById(`step-${to}`).classList.add('active');
+
+            if (to === 'confirm') {
+                showConfirmation();
+            }
+        }
+
+        function previousStep(from, to) {
+            updateProgress(to);
+            document.getElementById(`step-${from}`).classList.remove('active');
+            document.getElementById(`step-${to}`).classList.add('active');
+        }
+
+        function showConfirmation() {
+            const summary = document.getElementById('confirm-summary');
+            const drive = selectedDrive.toUpperCase();
+
+            summary.innerHTML = `
+                <div class="summary-item">
+                    <span class="summary-label">Drive</span>
+                    <span class="summary-value">${drive}:\\</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Models Directory</span>
+                    <span class="summary-value">${drive}:\\teoaaag-data\\models</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Cache Directory</span>
+                    <span class="summary-value">${drive}:\\teoaaag-data\\cache</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Ollama Data</span>
+                    <span class="summary-value">${drive}:\\teoaaag-data\\ollama</span>
+                </div>
+            `;
+        }
+
+        async function initializeSetup() {
+            try {
+                document.getElementById('confirm-btn').disabled = true;
+                document.getElementById('confirm-btn').textContent = 'Initializing...';
+
+                const res = await fetch(`${API_BASE}/api/setup/initialize`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ drive: selectedDrive })
+                });
+
+                const data = await res.json();
+
+                if (!data.success) {
+                    showError(`Setup error: ${data.error}`);
+                    document.getElementById('confirm-btn').disabled = false;
+                    document.getElementById('confirm-btn').textContent = 'Initialize →';
+                    return;
+                }
+
+                // Show success and move to complete step
+                const msg = document.getElementById('complete-message');
+                msg.textContent = data.message;
+                msg.style.display = 'block';
+
+                updateProgress('complete');
+                document.getElementById('step-confirm').classList.remove('active');
+                document.getElementById('step-complete').classList.add('active');
+
+            } catch (err) {
+                showError(`Initialization error: ${err.message}`);
+                document.getElementById('confirm-btn').disabled = false;
+                document.getElementById('confirm-btn').textContent = 'Initialize →';
+            }
+        }
+
+        function launchDashboard() {
+            window.location.href = '/';
+        }
+
+        function updateProgress(step) {
+            const steps = ['welcome', 'drives', 'confirm', 'complete'];
+            const index = steps.indexOf(step);
+            const progress = ((index + 1) / steps.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error-message');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            console.error('[Setup Error]', message);
+        }
+    </script>
+</body>
+</html>
