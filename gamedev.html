@@ -1708,17 +1708,24 @@ function _updateAIDot(tier,label){
 function handleAIKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAIMessage();}}
 function clearAIChat(){document.getElementById('ai-chat').innerHTML='';aiSystemMsg('Cleared.');}
 function aiSystemMsg(msg){const chat=document.getElementById('ai-chat');if(!chat)return;const div=document.createElement('div');div.className='ai-msg system';div.textContent=msg;chat.appendChild(div);chat.scrollTop=chat.scrollHeight;}
+// Returns true when running on a static host (GitHub Pages, file://) with no backend
+function _isStaticHost(){
+  return window.location.hostname.endsWith('github.io') || window.location.protocol === 'file:';
+}
+
 async function checkAIStatus(){
   const dot=document.getElementById('ai-dot'),label=document.getElementById('ai-label');
-  // Check Ollama first
-  try{
-    const r=await fetch('/api/tags',{signal:AbortSignal.timeout(2000)});
-    if(r.ok){
-      const d=await r.json();const models=d.models||[];
-      if(models.length){GDS.ai.model=models[0].name;dot.className='dot online';label.textContent=models[0].name.split(':')[0];document.getElementById('menu-btn').classList.add('ai-active');return;}
-      else{dot.className='dot busy';label.textContent='Ollama (no models)';return;}
-    }
-  }catch{}
+  // Only probe Ollama when a backend server is actually present
+  if(!_isStaticHost()){
+    try{
+      const r=await fetch('/api/tags',{signal:AbortSignal.timeout(2000)});
+      if(r.ok){
+        const d=await r.json();const models=d.models||[];
+        if(models.length){GDS.ai.model=models[0].name;dot.className='dot online';label.textContent=models[0].name.split(':')[0];document.getElementById('menu-btn').classList.add('ai-active');return;}
+        else{dot.className='dot busy';label.textContent='Ollama (no models)';return;}
+      }
+    }catch{}
+  }
   // Check Chrome Built-in AI
   if(window.llmFallback){
     const chromeAvail=await window.llmFallback.chromeAI.check();

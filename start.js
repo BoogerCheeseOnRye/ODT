@@ -86,8 +86,8 @@ const server = http.createServer((req, res) => {
   }
 
   // Route aliases
-  const routes = { '/': 'gamedev.html', '/swarm': 'swarm.html', '/odt': 'index.html' };
-  const filePath = path.join(DIR, routes[pathname] || pathname.slice(1) || 'gamedev.html');
+  const routes = { '/': 'index.html', '/swarm': 'swarm.html', '/odt': 'odt.html' };
+  const filePath = path.join(DIR, routes[pathname] || pathname.slice(1) || 'index.html');
 
   // Security: prevent directory traversal
   if (!filePath.startsWith(DIR)) { res.writeHead(403); res.end('Forbidden'); return; }
