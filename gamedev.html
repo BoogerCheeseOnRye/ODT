@@ -80,6 +80,7 @@ button{cursor:pointer;background:none;border:none;}
   position:fixed;top:50px;left:4px;z-index:501;
   background:#0a1220;border:1px solid #1e2d44;border-radius:10px;
   padding:12px;width:340px;
+  max-height:calc(100vh - 70px);overflow-y:auto;
   box-shadow:0 8px 40px rgba(0,0,0,.6),0 0 0 1px #00d4ff11;
   transform:scale(.94) translateY(-6px);opacity:0;
   transition:all .18s cubic-bezier(.34,1.56,.64,1);
@@ -534,12 +535,14 @@ button{cursor:pointer;background:none;border:none;}
     <div class="cmd-tile" onclick="cmdDo('find')" data-tags="find search replace"><div class="cmd-tile-icon">🔍</div><div class="cmd-tile-label">Find</div><div class="cmd-tile-key">^H</div></div>
   </div>
 
-  <div class="cmd-section-label">AI Agents</div>
-  <div class="cmd-ai-bar" id="cmd-ai-bar">
-    <div class="cmd-ai-row" onclick="cmdDo('ai_code')"><div class="ai-mode-dot" style="background:#58a6ff"></div>Generate code for current file</div>
-    <div class="cmd-ai-row" onclick="cmdDo('ai_debug')"><div class="ai-mode-dot" style="background:#f85149"></div>Debug — find issues in file</div>
-    <div class="cmd-ai-row" onclick="cmdDo('ai_explain')"><div class="ai-mode-dot" style="background:#3fb950"></div>Explain selected code</div>
-    <div class="cmd-ai-row" onclick="cmdDo('ai_optimize')"><div class="ai-mode-dot" style="background:#e3b341"></div>Optimize — improve performance</div>
+  <div class="cmd-section-label" data-section="agents">AI Agents</div>
+  <div class="cmd-grid" id="cmd-ai-bar">
+    <div class="cmd-tile" onclick="cmdDo('ai_code')" data-tags="ai agent code generate queue"><div class="cmd-tile-icon">💻</div><div class="cmd-tile-label">Code Gen</div></div>
+    <div class="cmd-tile" onclick="cmdDo('ai_debug')" data-tags="ai agent debug fix queue"><div class="cmd-tile-icon">🐛</div><div class="cmd-tile-label">Debug</div></div>
+    <div class="cmd-tile" onclick="cmdDo('ai_explain')" data-tags="ai agent explain queue"><div class="cmd-tile-icon">📖</div><div class="cmd-tile-label">Explain</div></div>
+    <div class="cmd-tile" onclick="cmdDo('ai_optimize')" data-tags="ai agent optimize queue"><div class="cmd-tile-icon">⚡</div><div class="cmd-tile-label">Optimize</div></div>
+    <div class="cmd-tile" onclick="cmdDo('build')" data-tags="build compile bundle agent queue"><div class="cmd-tile-icon">🔨</div><div class="cmd-tile-label">Build</div></div>
+    <div class="cmd-tile" onclick="toggleAgentPanel();closeCmdMenu();" data-tags="agent queue panel open"><div class="cmd-tile-icon">⬡</div><div class="cmd-tile-label">Queue</div></div>
   </div>
 </div>
 
@@ -1158,6 +1161,7 @@ function cmdDo(action){
     case 'ai_debug':  queueAgentTask('ai_debug'); break;
     case 'ai_explain':queueAgentTask('ai_explain'); break;
     case 'ai_optimize':queueAgentTask('ai_optimize'); break;
+    case 'build':     queueAgentTask('build'); break;
   }
 }
 
