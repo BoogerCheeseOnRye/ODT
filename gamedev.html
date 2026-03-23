@@ -1372,14 +1372,137 @@ function updateHighlight(){
 }
 function handleEditorKey(e){
   const ed=e.target;
-  if(e.key==='Tab'){e.preventDefault();const s=ed.selectionStart,end=ed.selectionEnd;ed.value=ed.value.slice(0,s)+'  '+ed.value.slice(end);ed.selectionStart=ed.selectionEnd=s+2;onEditorInput();return;}
-  if(e.ctrlKey&&e.key==='s'){e.preventDefault();saveCurrentFile();return;}
-  if(e.ctrlKey&&e.key==='h'){e.preventDefault();openModal('modal-find');return;}
-  if(e.key==='F5'){e.preventDefault();runGame();return;}
-  const PAIRS={'(':')','{':'}','[':']','"':'"',"'":"'"};
-  if(PAIRS[e.key]&&!e.ctrlKey&&!e.altKey&&ed.selectionStart===ed.selectionEnd){
-    e.preventDefault();const s=ed.selectionStart;ed.value=ed.value.slice(0,s)+e.key+PAIRS[e.key]+ed.value.slice(s);ed.selectionStart=ed.selectionEnd=s+1;onEditorInput();
+  const s=ed.selectionStart, end=ed.selectionEnd;
+  const val=ed.value;
+
+  // ── Ctrl shortcuts ──────────────────────────────────────────────
+  if(e.ctrlKey&&!e.altKey){
+    // Ctrl+S — Save
+    if(e.key==='s'){e.preventDefault();saveCurrentFile();return;}
+    // Ctrl+F or Ctrl+H — Find & Replace
+    if(e.key==='f'||e.key==='h'){e.preventDefault();openModal('modal-find');return;}
+    // Ctrl+N — New file
+    if(e.key==='n'&&!e.shiftKey){e.preventDefault();newFile();return;}
+    // Ctrl+/ — Toggle line comment
+    if(e.key==='/'){
+      e.preventDefault();
+      const before=val.slice(0,s),after=val.slice(end);
+      const lineStart=before.lastIndexOf('\n')+1;
+      const lineEnd=val.indexOf('\n',end);const lineEndPos=lineEnd===-1?val.length:lineEnd;
+      const line=val.slice(lineStart,lineEndPos);
+      let newLine,delta;
+      if(line.trimStart().startsWith('//')){newLine=line.replace(/^(\s*)\/\/ ?/,'$1');delta=-(line.length-newLine.length);}
+      else{newLine=line.replace(/^(\s*)/,'$1// ');delta=newLine.length-line.length;}
+      ed.value=val.slice(0,lineStart)+newLine+val.slice(lineEndPos);
+      ed.selectionStart=ed.selectionEnd=s+delta;onEditorInput();return;
+    }
+    // Ctrl+D — Duplicate line
+    if(e.key==='d'){
+      e.preventDefault();
+      const ls=val.lastIndexOf('\n',s-1)+1;
+      const le=val.indexOf('\n',s);const lePos=le===-1?val.length:le;
+      const line=val.slice(ls,lePos);
+      ed.value=val.slice(0,lePos)+'\n'+line+val.slice(lePos);
+      ed.selectionStart=ed.selectionEnd=lePos+1+(s-ls);onEditorInput();return;
+    }
+    // Ctrl+Shift+K — Delete line
+    if(e.key==='K'||e.shiftKey&&e.key==='k'){
+      e.preventDefault();
+      const ls=val.lastIndexOf('\n',s-1)+1;
+      const le=val.indexOf('\n',s);
+      if(le===-1){ed.value=val.slice(0,ls===0?0:ls-1);}
+      else{ed.value=val.slice(0,ls)+val.slice(le+1);}
+      ed.selectionStart=ed.selectionEnd=Math.min(ls,ed.value.length);onEditorInput();return;
+    }
+    // Ctrl+G — Go to line
+    if(e.key==='g'){
+      e.preventDefault();
+      const target=prompt('Go to line:');if(!target)return;
+      const n=parseInt(target,10)-1;if(isNaN(n)||n<0)return;
+      const lines=val.split('\n');
+      const pos=lines.slice(0,Math.min(n,lines.length-1)).join('\n').length+(n>0?1:0);
+      ed.selectionStart=ed.selectionEnd=Math.min(pos,val.length);
+      ed.blur();ed.focus();return;
+    }
+    // Ctrl+] — Indent selection
+    if(e.key===']'){
+      e.preventDefault();
+      _indentSelection(ed,val,s,end,true);return;
+    }
+    // Ctrl+[ — De-indent selection
+    if(e.key==='['){
+      e.preventDefault();
+      _indentSelection(ed,val,s,end,false);return;
+    }
+    // Ctrl+Enter — Run game
+    if(e.key==='Enter'){e.preventDefault();runGame();return;}
   }
+
+  // ── Alt+Up / Alt+Down — Move line ──────────────────────────────
+  if(e.altKey&&!e.ctrlKey&&(e.key==='ArrowUp'||e.key==='ArrowDown')){
+    e.preventDefault();
+    const lines=val.split('\n');
+    const ls=val.lastIndexOf('\n',s-1)+1;
+    const rowIdx=val.slice(0,s).split('\n').length-1;
+    const col=s-ls;
+    if(e.key==='ArrowUp'&&rowIdx>0){
+      [lines[rowIdx-1],lines[rowIdx]]=[lines[rowIdx],lines[rowIdx-1]];
+      const newVal=lines.join('\n');
+      ed.value=newVal;
+      const newS=lines.slice(0,rowIdx-1).join('\n').length+(rowIdx-1>0?1:0)+col;
+      ed.selectionStart=ed.selectionEnd=Math.min(newS,newVal.length);
+    } else if(e.key==='ArrowDown'&&rowIdx<lines.length-1){
+      [lines[rowIdx+1],lines[rowIdx]]=[lines[rowIdx],lines[rowIdx+1]];
+      const newVal=lines.join('\n');
+      ed.value=newVal;
+      const newS=lines.slice(0,rowIdx+1).join('\n').length+(rowIdx+1>0?1:0)+col;
+      ed.selectionStart=ed.selectionEnd=Math.min(newS,newVal.length);
+    }
+    onEditorInput();return;
+  }
+
+  // ── Tab / Shift+Tab — Indent / De-indent ────────────────────────
+  if(e.key==='Tab'){
+    e.preventDefault();
+    if(s===end){
+      // No selection — insert 2 spaces at cursor
+      ed.value=val.slice(0,s)+'  '+val.slice(end);
+      ed.selectionStart=ed.selectionEnd=s+2;
+    } else {
+      _indentSelection(ed,val,s,end,!e.shiftKey);return;
+    }
+    onEditorInput();return;
+  }
+  if(e.key==='Tab'&&e.shiftKey){e.preventDefault();_indentSelection(ed,val,s,end,false);return;}
+
+  // ── F5 — Run ───────────────────────────────────────────────────
+  if(e.key==='F5'){e.preventDefault();runGame();return;}
+
+  // ── Auto-close brackets ────────────────────────────────────────
+  const PAIRS={'(':')','{':'}','[':']','"':'"',"'":"'"};
+  if(PAIRS[e.key]&&!e.ctrlKey&&!e.altKey&&s===end){
+    e.preventDefault();
+    ed.value=val.slice(0,s)+e.key+PAIRS[e.key]+val.slice(s);
+    ed.selectionStart=ed.selectionEnd=s+1;onEditorInput();
+  }
+}
+
+function _indentSelection(ed,val,s,end,indent){
+  // Expand selection to full lines
+  const ls=val.lastIndexOf('\n',s-1)+1;
+  const le=val.indexOf('\n',end-1);const lePos=le===-1?val.length:le;
+  const block=val.slice(ls,lePos);
+  let delta=0;
+  const newBlock=block.split('\n').map(line=>{
+    if(indent){delta+=2;return'  '+line;}
+    if(line.startsWith('  ')){delta-=2;return line.slice(2);}
+    if(line.startsWith(' ')){delta-=1;return line.slice(1);}
+    return line;
+  }).join('\n');
+  ed.value=val.slice(0,ls)+newBlock+val.slice(lePos);
+  ed.selectionStart=Math.max(ls,s+(indent?2:Math.max(-(val.slice(ls,s).match(/^ */)[0].length),-2)));
+  ed.selectionEnd=Math.max(ls,end+delta);
+  onEditorInput();
 }
 function formatCode(){
   const ed=document.getElementById('code-input');let indent=0;
@@ -1695,10 +1818,22 @@ document.getElementById('tb-project-name').addEventListener('change',function(){
 
 // Global hotkeys
 document.addEventListener('keydown',e=>{
+  const inEditor=e.target.id==='code-input';
+  // Space (when body focused) OR Ctrl+Shift+P — Command Palette
   if(e.key===' '&&e.target===document.body){e.preventDefault();toggleCmdMenu();return;}
-  if(e.ctrlKey&&e.key==='n'&&!e.shiftKey){e.preventDefault();newFile();}
-  if(e.key==='Escape'){document.querySelectorAll('.modal-backdrop.open').forEach(m=>m.classList.remove('open'));closeCmdMenu();}
+  if(e.ctrlKey&&e.shiftKey&&e.key==='P'){e.preventDefault();toggleCmdMenu();return;}
+  // Ctrl+N — New file (global, outside editor)
+  if(e.ctrlKey&&e.key==='n'&&!e.shiftKey&&!inEditor){e.preventDefault();newFile();}
+  // Ctrl+F / Ctrl+H — Find (global, outside editor)
+  if(e.ctrlKey&&(e.key==='f'||e.key==='h')&&!inEditor){e.preventDefault();openModal('modal-find');}
+  // Ctrl+Shift+S — Save all (save current file from anywhere)
+  if(e.ctrlKey&&e.shiftKey&&e.key==='S'){e.preventDefault();saveCurrentFile();}
+  // F5 — Run
   if(e.key==='F5'){e.preventDefault();runGame();}
+  // Ctrl+Enter — Run (from anywhere)
+  if(e.ctrlKey&&e.key==='Enter'&&!inEditor){e.preventDefault();runGame();}
+  // Escape — Close modals / command menu
+  if(e.key==='Escape'){document.querySelectorAll('.modal-backdrop.open').forEach(m=>m.classList.remove('open'));closeCmdMenu();}
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1761,8 +1896,61 @@ function addEngineToProject(){
 // BROWSER AI LOADER — 4-tier picker
 // ═══════════════════════════════════════════════════════════════════
 async function loadWebLLM(){
-  // Show model picker modal
-  _showBrowserAIPicker();
+  // Show download consent if user hasn't agreed yet, then show picker
+  if(localStorage.getItem('odtAIDownloadConsented')==='true'){
+    _showBrowserAIPicker();
+  } else {
+    _showAIDownloadConsent(()=>_showBrowserAIPicker());
+  }
+}
+
+function _showAIDownloadConsent(onAccept){
+  document.getElementById('odt-ai-consent')?.remove();
+  const el = document.createElement('div');
+  el.id = 'odt-ai-consent';
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  el.innerHTML = `<div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:26px 28px;max-width:480px;width:93%;color:#c9d1d9;font-family:inherit;">
+    <h3 style="color:#f0883e;margin-bottom:10px;font-size:1em;">Browser AI — Download Required</h3>
+    <p style="font-size:.85em;color:#8b949e;line-height:1.65;margin-bottom:12px;">
+      ODT will download an AI language model directly to your browser. Nothing is sent to any server — inference runs 100% locally on your device.
+    </p>
+    <table style="width:100%;font-size:.8em;border-collapse:collapse;margin-bottom:14px;">
+      <tr style="color:#555;border-bottom:1px solid #21262d;">
+        <th style="text-align:left;padding:4px 6px;">Option</th>
+        <th style="text-align:left;padding:4px 6px;">Size</th>
+        <th style="text-align:left;padding:4px 6px;">Requires</th>
+      </tr>
+      <tr style="color:#c9d1d9;">
+        <td style="padding:5px 6px;">Chrome Built-in AI</td>
+        <td style="padding:5px 6px;color:#3fb950;">0 MB</td>
+        <td style="padding:5px 6px;color:#8b949e;">Chrome 127+ flag</td>
+      </tr>
+      <tr style="color:#c9d1d9;background:#0d1117;">
+        <td style="padding:5px 6px;">MLC WebLLM (WebGPU)</td>
+        <td style="padding:5px 6px;color:#d29922;">370 MB – 2.2 GB</td>
+        <td style="padding:5px 6px;color:#8b949e;">Chrome/Edge WebGPU</td>
+      </tr>
+      <tr style="color:#c9d1d9;">
+        <td style="padding:5px 6px;">Transformers.js (WASM)</td>
+        <td style="padding:5px 6px;color:#d29922;">50 MB – 640 MB</td>
+        <td style="padding:5px 6px;color:#8b949e;">Any browser</td>
+      </tr>
+    </table>
+    <p style="font-size:.78em;color:#555;margin-bottom:16px;">
+      Models are cached in your browser's IndexedDB after first download and load instantly from then on. You can also run Ollama locally to avoid any browser download entirely.
+    </p>
+    <div style="display:flex;gap:10px;">
+      <button id="_ai-consent-ok" style="flex:1;background:#238636;color:#fff;border:1px solid #2ea043;padding:8px;border-radius:6px;cursor:pointer;font-size:.88em;font-weight:600;">I understand — choose a model</button>
+      <button onclick="document.getElementById('odt-ai-consent').remove()" style="background:#21262d;color:#8b949e;border:1px solid #30363d;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:.88em;">Cancel</button>
+    </div>
+    <p style="font-size:.72em;color:#444;text-align:center;margin-top:10px;">Alternatively: install Ollama (ollama.ai) for zero-browser-download AI.</p>
+  </div>`;
+  document.body.appendChild(el);
+  document.getElementById('_ai-consent-ok').onclick = ()=>{
+    localStorage.setItem('odtAIDownloadConsented','true');
+    el.remove();
+    onAccept();
+  };
 }
 
 function _showBrowserAIPicker(){

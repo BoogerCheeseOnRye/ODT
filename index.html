@@ -7,11 +7,58 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0d1117">
     <title>ODT - Omni Development Terminal</title>
-    <script>
-        // Check if warning was acknowledged
-        if (sessionStorage.getItem('odtDashboardWarningAcknowledged') !== 'true') {
-            window.location.href = 'warning.html';
+    <style>
+        #odt-consent-overlay {
+            position: fixed; inset: 0; background: #0d1117; z-index: 99999;
+            display: flex; align-items: center; justify-content: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
+        #odt-consent-box {
+            background: #161b22; border: 1px solid #30363d; border-radius: 10px;
+            padding: 28px 32px; max-width: 520px; width: 92%; color: #c9d1d9;
+        }
+        #odt-consent-box h2 { color: #f0883e; margin-bottom: 8px; font-size: 1.1em; }
+        #odt-consent-box .badge {
+            display: inline-block; background: #1f2937; border: 1px solid #374151;
+            border-radius: 4px; padding: 2px 8px; font-size: .78em; color: #9ca3af; margin-bottom: 16px;
+        }
+        #odt-consent-box p { font-size: .87em; color: #8b949e; line-height: 1.6; margin-bottom: 12px; }
+        #odt-consent-box ul { font-size: .83em; color: #8b949e; line-height: 1.7; padding-left: 18px; margin-bottom: 18px; }
+        #odt-consent-box ul li strong { color: #c9d1d9; }
+        #odt-consent-accept {
+            background: #238636; color: #fff; border: 1px solid #2ea043;
+            padding: 9px 22px; border-radius: 6px; cursor: pointer; font-size: .9em;
+            font-weight: 600; width: 100%;
+        }
+        #odt-consent-accept:hover { background: #2ea043; }
+        #odt-consent-box .small { font-size: .75em; color: #555; text-align: center; margin-top: 10px; }
+    </style>
+    <script>
+        (function(){
+            if (sessionStorage.getItem('odtDashboardWarningAcknowledged') === 'true') return;
+            document.addEventListener('DOMContentLoaded', function(){
+                var box = document.createElement('div');
+                box.id = 'odt-consent-overlay';
+                box.innerHTML = '<div id="odt-consent-box">'
+                    + '<h2>⚠️ ODT Dashboard — Automated System</h2>'
+                    + '<span class="badge">Omni Development Terminal · Automated Development Environment</span>'
+                    + '<p>This dashboard runs autonomous AI agents that can read, write, and execute code on your machine. Review the points below before continuing.</p>'
+                    + '<ul>'
+                    + '<li><strong>Autonomous execution</strong> — agents can run shell commands and modify files without additional prompts.</li>'
+                    + '<li><strong>Local-only</strong> — all data and AI inference stay on your device. No data is sent to external servers unless you configure a remote Ollama URL.</li>'
+                    + '<li><strong>Your responsibility</strong> — review agent tasks before approving irreversible actions (file deletion, network requests, etc.).</li>'
+                    + '<li><strong>No undo</strong> — file system changes made by agents are not automatically reversible.</li>'
+                    + '</ul>'
+                    + '<button id="odt-consent-accept">I understand — Enter ODT Dashboard</button>'
+                    + '<p class="small">This acknowledgement is stored in sessionStorage and resets when you close the browser tab.</p>'
+                    + '</div>';
+                document.body.prepend(box);
+                document.getElementById('odt-consent-accept').onclick = function(){
+                    sessionStorage.setItem('odtDashboardWarningAcknowledged','true');
+                    document.getElementById('odt-consent-overlay').remove();
+                };
+            });
+        })();
     </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }

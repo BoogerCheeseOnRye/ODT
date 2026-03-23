@@ -18,6 +18,166 @@ Open **http://localhost:5000** — the GameDev Suite loads immediately.
 
 ---
 
+## Full Setup Guide
+
+### 1 — Get the code
+
+**Clone the standalone branch:**
+```bash
+git clone --branch V2-TheRepliting --single-branch \
+  https://github.com/BoogerCheeseOnRye/ODT.git odt-v2
+cd odt-v2
+```
+
+**Or download a zip without git:**
+```bash
+curl -L https://github.com/BoogerCheeseOnRye/ODT/archive/refs/heads/V2-TheRepliting.zip \
+  -o odt-v2.zip
+unzip odt-v2.zip
+cd ODT-V2-TheRepliting
+```
+
+---
+
+### 2 — Install Node.js (if not already installed)
+
+**macOS / Linux — via nvm (recommended):**
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+source ~/.bashrc   # or: source ~/.zshrc
+nvm install 20
+nvm use 20
+node -v            # should print v20.x.x
+```
+
+**Ubuntu / Debian — via apt:**
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+node -v
+```
+
+**macOS — via Homebrew:**
+```bash
+brew install node@20
+node -v
+```
+
+**Windows — download the installer:**
+```
+https://nodejs.org/en/download  →  Windows Installer (.msi)
+```
+
+---
+
+### 3 — Start the server
+
+```bash
+node start.js
+```
+
+Custom port or Ollama URL:
+```bash
+PORT=8080 node start.js
+PORT=5000 OLLAMA_URL=http://192.168.1.5:11434 node start.js
+```
+
+Health check (confirms server is running):
+```bash
+curl http://localhost:5000/health
+# → {"status":"ok","server":"ODT v2","routes":["/","/odt","/swarm"]}
+```
+
+---
+
+### 4 — Install Ollama (optional — Tier 1 AI)
+
+Ollama gives you the fastest, highest-quality AI with zero browser download.
+
+**macOS / Linux:**
+```bash
+curl -fsSL https://ollama.ai/install.sh | sh
+ollama serve                          # start the Ollama server
+```
+
+**Pull a model** (run in a second terminal):
+```bash
+# Recommended — fast and capable (~4 GB):
+ollama pull qwen2.5:7b
+
+# Smaller options:
+ollama pull tinyllama                 # ~600 MB
+ollama pull phi3                      # ~2 GB, great for code
+ollama pull llama3.2:1b               # ~1.3 GB, Meta's smallest
+
+# List what you have:
+ollama list
+
+# Test a model from the command line:
+ollama run qwen2.5:7b "Write a JavaScript game loop"
+```
+
+**Verify Ollama is reachable by ODT:**
+```bash
+curl http://localhost:11434/api/tags
+# → {"models":[{"name":"qwen2.5:7b",...}]}
+```
+
+If Ollama is running, the status dot in ODT's top bar turns green automatically within 30 seconds.
+
+**Windows:**
+```
+Download the installer: https://ollama.ai/download/windows
+Run: ollama serve
+```
+
+---
+
+### 5 — Browser AI (no Ollama required)
+
+If you don't want to run Ollama, ODT falls back through three browser-side tiers automatically. The first time you click **🧠 Local** in the AI panel, a consent screen explains what will be downloaded, then lets you choose a model.
+
+**Chrome Built-in AI (0 MB download — Chrome 127+ only):**
+```
+1. Open Chrome and navigate to: chrome://flags
+2. Search: Prompt API for Gemini Nano
+3. Set to: Enabled
+4. Click "Relaunch"
+5. Gemini Nano is already on your device — no download needed.
+```
+
+**Verify Chrome AI is available in the browser console:**
+```javascript
+// Paste in DevTools console (F12):
+window.ai !== undefined || window.LanguageModel !== undefined
+// → true means it's available
+```
+
+**MLC WebLLM / Transformers.js:**  
+These download automatically when you select them in the 🧠 picker. No manual steps — just click, consent, and wait for the progress bar.
+
+---
+
+### 6 — Verify full setup
+
+```bash
+# Server running?
+curl -s http://localhost:5000/health | python3 -m json.tool
+
+# Ollama running?
+curl -s http://localhost:11434/api/tags | python3 -m json.tool
+
+# Node version OK?
+node -v   # needs 18+
+
+# Open the GameDev Suite:
+open http://localhost:5000         # macOS
+xdg-open http://localhost:5000    # Linux
+start http://localhost:5000       # Windows
+```
+
+---
+
 ## Routes
 
 | URL | What you get |
