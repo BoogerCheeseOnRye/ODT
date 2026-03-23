@@ -34,6 +34,11 @@
         #odt-consent-box .small { font-size: .75em; color: #555; text-align: center; margin-top: 10px; }
     </style>
     <script>
+        // On static hosts (GitHub Pages, file://) route / to the GameDev Suite
+        if (window.location.hostname.endsWith('github.io') ||
+            window.location.protocol === 'file:') {
+            window.location.replace('./gamedev.html');
+        }
         (function(){
             if (sessionStorage.getItem('odtDashboardWarningAcknowledged') === 'true') return;
             document.addEventListener('DOMContentLoaded', function(){
