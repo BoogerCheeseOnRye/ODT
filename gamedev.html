@@ -781,6 +781,7 @@ button{cursor:pointer;background:none;border:none;}
     <span style="font-size:16px">⬡</span>
     <span id="agent-panel-title">Agent Queue</span>
     <span id="agent-panel-count" class="all-done">idle</span>
+    <button class="ap-close" onclick="openNewAgentModal()" title="Launch new agent" style="color:#388bfd;font-size:18px;margin-right:4px">＋</button>
     <button class="ap-close" onclick="toggleAgentPanel()">✕</button>
   </div>
   <div id="agent-list"></div>
@@ -789,6 +790,43 @@ button{cursor:pointer;background:none;border:none;}
     <button class="agent-quick-btn" onclick="queueAgentTask('ai_debug')">🐛 Debug</button>
     <button class="agent-quick-btn" onclick="queueAgentTask('ai_explain')">📖 Explain</button>
     <button class="agent-quick-btn" onclick="queueAgentTask('build')">🔨 Build</button>
+    <button class="agent-quick-btn" style="border-color:#388bfd;color:#388bfd" onclick="openNewAgentModal()">＋ New</button>
+  </div>
+</div>
+
+<!-- ═══════════════ NEW AGENT MODAL ════════════════════════════════ -->
+<div class="modal-backdrop" id="modal-new-agent">
+  <div class="modal-box" style="max-width:420px">
+    <h3>⬡ Launch Agent</h3>
+    <div class="modal-field">
+      <label class="modal-label">Task Type</label>
+      <select class="modal-input" id="na-type" onchange="updateAgentPromptHint()">
+        <option value="ai_code">💻 Code Generation</option>
+        <option value="ai_debug">🐛 Debug / Fix Issues</option>
+        <option value="ai_explain">📖 Explain Code</option>
+        <option value="ai_optimize">⚡ Optimize Performance</option>
+        <option value="ai_design">🎮 Game Design Advice</option>
+        <option value="build">🔨 Build Project</option>
+        <option value="scan">🔍 Scan / Audit Files</option>
+      </select>
+    </div>
+    <div class="modal-field" id="na-prompt-field">
+      <label class="modal-label">Custom Instructions <span style="color:#2d3a4e;font-weight:400">(optional)</span></label>
+      <textarea class="modal-input" id="na-prompt" rows="4" placeholder="Leave blank to use default prompt for the selected type…" style="resize:vertical;font-family:'Courier New',monospace;font-size:11px;line-height:1.5"></textarea>
+    </div>
+    <div class="modal-field">
+      <label class="modal-label">Context</label>
+      <select class="modal-input" id="na-context">
+        <option value="file">Current file only</option>
+        <option value="all">All project files</option>
+        <option value="none">No file context</option>
+      </select>
+    </div>
+    <div id="na-hint" style="font-size:10px;color:#4d6fa8;margin:4px 0 8px;line-height:1.4;padding:6px 8px;background:#050810;border-radius:4px;border:1px solid #131929"></div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeModal('modal-new-agent')">Cancel</button>
+      <button class="modal-btn primary" onclick="dispatchNewAgent()">⬡ Dispatch Agent</button>
+    </div>
   </div>
 </div>
 
@@ -1054,9 +1092,9 @@ class AgentTaskQueue {
 
 const TASKS = new AgentTaskQueue(4);
 
-function queueAgentTask(type, extraPrompt = ''){
+function queueAgentTask(type, extraPrompt = '', overrideCode = null){
   const file = activeFile();
-  const code = file ? file.content : '';
+  const code = overrideCode !== null ? overrideCode : (file ? file.content : '');
   const labels = { ai_code:'Code Gen', ai_debug:'Debug', ai_explain:'Explain', ai_optimize:'Optimize', ai_design:'Design', build:'Build', scan:'Scan', export:'Export' };
   const name = labels[type] || type;
   const desc = GDS.activeFile ? `${GDS.activeFile}` : 'no file';
@@ -1105,6 +1143,51 @@ function queueAgentTask(type, extraPrompt = ''){
 // Toggle agent panel
 function toggleAgentPanel(){
   document.getElementById('agent-panel').classList.toggle('open');
+}
+
+function openNewAgentModal(){
+  document.getElementById('na-prompt').value = '';
+  document.getElementById('na-type').value = 'ai_code';
+  document.getElementById('na-context').value = 'file';
+  updateAgentPromptHint();
+  openModal('modal-new-agent');
+}
+
+const _AGENT_HINTS = {
+  ai_code:    'AI will read your file and write/extend code based on your instructions. Leave blank → "Improve and extend this code."',
+  ai_debug:   'AI will scan for bugs, logic errors, and exceptions. Leave blank → "Find and explain bugs in this code."',
+  ai_explain: 'AI will describe what the selected code does in plain language. Leave blank → "Explain what this code does."',
+  ai_optimize:'AI will suggest performance and readability improvements. Leave blank → "Suggest performance improvements."',
+  ai_design:  'AI will give game design advice, mechanics suggestions, or level ideas. Enter your specific question.',
+  build:      'Bundles all project files into a standalone HTML game. No AI needed — runs instantly.',
+  scan:       'Counts files and lines across the project. No AI needed — runs instantly.',
+};
+
+function updateAgentPromptHint(){
+  const type = document.getElementById('na-type').value;
+  const hint = document.getElementById('na-hint');
+  const promptField = document.getElementById('na-prompt-field');
+  hint.textContent = _AGENT_HINTS[type] || '';
+  promptField.style.display = (type === 'build' || type === 'scan') ? 'none' : '';
+}
+
+function dispatchNewAgent(){
+  const type    = document.getElementById('na-type').value;
+  const prompt  = document.getElementById('na-prompt').value.trim();
+  const ctx     = document.getElementById('na-context').value;
+  closeModal('modal-new-agent');
+  // For multi-file context, temporarily expand the code passed
+  if (ctx === 'all') {
+    const proj = activeProject();
+    const combined = (proj?.files||[]).map(f=>`// ${f.name}\n${f.content||''}`).join('\n\n').slice(0,4000);
+    queueAgentTask(type, prompt, combined);
+  } else if (ctx === 'none') {
+    queueAgentTask(type, prompt, '');
+  } else {
+    queueAgentTask(type, prompt);
+  }
+  // Ensure panel is open
+  document.getElementById('agent-panel').classList.add('open');
 }
 
 // ═══════════════════════════════════════════════════════════════════
