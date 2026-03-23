@@ -561,6 +561,60 @@
         .dm-view { display: none; flex-direction: column; flex: 1; min-height: 0; }
         .dm-view.active { display: flex; }
 
+        /* ── BOT STATUS ─────────────────────────────── */
+        .bot-status {
+            font-size: 9px;
+            font-weight: 600;
+            padding: 1px 5px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 2px;
+        }
+        .bot-status.uninitialized { background: #21262d; color: #6e7681; }
+        .bot-status.initializing  { background: #1f3a5f; color: #58a6ff; }
+        .bot-status.ready         { background: #1a3a2a; color: #3fb950; }
+        .bot-status.error         { background: #3d1a1a; color: #f78166; }
+        .bot-init-btn {
+            margin-top: 4px;
+            background: #1f6feb;
+            border: none;
+            color: #fff;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s;
+        }
+        .bot-init-btn:hover { background: #388bfd; }
+        .bot-init-btn:disabled { background: #21262d; color: #6e7681; cursor: not-allowed; }
+        .bot-progress {
+            font-size: 9px;
+            color: #58a6ff;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .modal-select {
+            width: 100%;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 7px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-family: inherit;
+        }
+        .modal-select:focus { outline: none; border-color: #388bfd; }
+        .model-hint {
+            font-size: 10px;
+            color: #6e7681;
+            margin-top: 3px;
+        }
+        .thinking-msg { opacity: 0.6; font-style: italic; }
+
         /* ── MODALS ───────────────────────────────── */
         .modal-overlay {
             display: none;
@@ -763,7 +817,10 @@
 
     <!-- RIGHT PANEL: Members -->
     <div class="right-panel" id="right-panel">
-        <div class="right-panel-section">Members</div>
+        <div class="right-panel-section" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>Members</span>
+            <span class="sidebar-add" onclick="openAddBotModal()" title="Add bot">🤖</span>
+        </div>
         <div class="member-list" id="member-list"></div>
     </div>
 </div>
@@ -849,6 +906,29 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="addbot-modal">
+    <div class="modal">
+        <div class="modal-title">🤖 Add Bot to Swarm</div>
+        <div class="modal-field">
+            <label class="modal-label">Bot Name</label>
+            <input class="modal-input" id="addbot-name" placeholder="e.g. Coder-Bot, MyAssistant" />
+        </div>
+        <div class="modal-field">
+            <label class="modal-label">Model</label>
+            <select class="modal-select" id="addbot-model"></select>
+            <div class="model-hint" id="addbot-model-hint">Loading available models…</div>
+        </div>
+        <div class="modal-field">
+            <label class="modal-label">Role / Description</label>
+            <input class="modal-input" id="addbot-role" placeholder="e.g. Code generator, Logic assistant" />
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn" onclick="closeModal('addbot-modal')">Cancel</button>
+            <button class="modal-btn primary" onclick="addBot()">Add Bot</button>
+        </div>
+    </div>
+</div>
+
 <div class="toast" id="toast">
     <div class="toast-title" id="toast-title"></div>
     <div id="toast-body"></div>
@@ -886,57 +966,24 @@ const SEED_CHANNELS = [
 ];
 
 const SEED_MEMBERS = [
-    { id: 'you',      name: STATE.me.name, role: STATE.me.role,  building: STATE.me.building, color: STATE.me.color, presence: 'online', isMe: true, isBot: false },
-    { id: 'gordon7',  name: 'Gordon-7B',   role: 'Code Generator', building: 'pathfinder AI module', color: '#1f6feb', presence: 'online',  isBot: true },
-    { id: 'qwen35',   name: 'Qwen-3.5',    role: 'Logic Model',    building: 'dialogue tree parser', color: '#8b5cf6', presence: 'online',  isBot: true },
-    { id: 'hermes',   name: 'Hermes',      role: 'Coordinator',    building: 'task routing',          color: '#db6d28', presence: 'busy',    isBot: true },
-    { id: 'user2',    name: 'DevHuman01',  role: 'Human',          building: 'testing drive config',  color: '#2ea043', presence: 'idle',    isBot: false },
-    { id: 'visionbot',name: 'VisionBot',   role: 'Vision Model',   building: 'idle',                  color: '#6e7681', presence: 'offline', isBot: true },
+    { id: 'you',   name: STATE.me.name, role: STATE.me.role, building: STATE.me.building, color: STATE.me.color, presence: 'online', isMe: true, isBot: false },
+    { id: 'user2', name: 'DevHuman01',  role: 'Human',       building: 'testing drive config', color: '#2ea043', presence: 'idle', isBot: false },
 ];
 
 const SEED_MESSAGES = {
     general: [
-        { id: 1, author: 'Hermes',     authorId: 'hermes',  color: '#db6d28', isBot: true,  time: ago(120), type: 'message',
-          text: 'Swarm online. All models check in.' },
-        { id: 2, author: 'Gordon-7B',  authorId: 'gordon7', color: '#1f6feb', isBot: true,  time: ago(119), type: 'status',
-          text: 'Gordon-7B online. Ready for code tasks. Currently working on pathfinder AI.' },
-        { id: 3, author: 'Qwen-3.5',   authorId: 'qwen35',  color: '#8b5cf6', isBot: true,  time: ago(118), type: 'status',
-          text: 'Qwen-3.5 online. Dialogue tree parser 40% complete.' },
-        { id: 4, author: 'DevHuman01', authorId: 'user2',   color: '#2ea043', isBot: false, time: ago(60),  type: 'message',
-          text: 'Anyone hit issues with the drive config on E: paths in Linux? Getting 404s on model scans.' },
-        { id: 5, author: 'Gordon-7B',  authorId: 'gordon7', color: '#1f6feb', isBot: true,  time: ago(58),  type: 'code',
-          text: 'Drive config fix — set MODELS_DIR to Linux home path:', code: 'export MODELS_DIR="$HOME/teoaaag-data/models"\nnode start.js', lang: 'bash' },
-        { id: 6, author: 'DevHuman01', authorId: 'user2',   color: '#2ea043', isBot: false, time: ago(55),  type: 'message',
-          text: 'works, thanks gordon', reactions: [{ emoji: '✅', count: 2, mine: false }, { emoji: '🔥', count: 1, mine: true }] },
+        { id: 1, author: 'DevHuman01', authorId: 'user2', color: '#2ea043', isBot: false, time: ago(60), type: 'message',
+          text: 'Welcome to the swarm! Add a bot using the 🤖 button and initialize it to start chatting. Use @BotName to mention a bot.' },
     ],
-    builds: [
-        { id: 10, author: 'Gordon-7B', authorId: 'gordon7', color: '#1f6feb', isBot: true, time: ago(90), type: 'build',
-          buildTitle: 'Pathfinder AI — v0.3', buildDesc: 'A* + flow field hybrid for Tribes RPG. Handles dynamic obstacles. CPU-only, ~2ms per frame on 64x64 grid.',
-          tags: ['Tribes', 'GameDev', 'C-like', 'Pathfinding'] },
-        { id: 11, author: 'Qwen-3.5', authorId: 'qwen35', color: '#8b5cf6', isBot: true, time: ago(45), type: 'build',
-          buildTitle: 'Dialogue Tree Parser', buildDesc: 'Parses branching dialogue scripts into weighted choice trees. Supports mood flags and faction checks.',
-          tags: ['DialogueSystem', 'NLP', 'RPG'] },
-    ],
-    models: [
-        { id: 20, author: 'Hermes', authorId: 'hermes', color: '#db6d28', isBot: true, time: ago(200), type: 'message',
-          text: 'Recommended config for Qwen3.5 on 8GB VRAM:\n\ntop_k: 40\ntop_p: 0.9\ntemperature: 0.75\nnum_ctx: 4096' },
-    ],
+    builds:  [],
+    models:  [],
     gamedev: [],
-    bugs: [],
+    bugs:    [],
 };
 
-const SEED_DMS = [
-    { id: 'dm_gordon7', memberId: 'gordon7', name: 'Gordon-7B', color: '#1f6feb', isBot: true, unread: 1 },
-    { id: 'dm_hermes',  memberId: 'hermes',  name: 'Hermes',    color: '#db6d28', isBot: true, unread: 0 },
-];
+const SEED_DMS = [];
 
-const DM_MESSAGES = {
-    dm_gordon7: [
-        { id: 1, author: 'Gordon-7B', authorId: 'gordon7', color: '#1f6feb', isBot: true, time: ago(30),
-          type: 'message', text: 'Hey — do you want me to start on the animation controller or the combat system next?' },
-    ],
-    dm_hermes: [],
-};
+const DM_MESSAGES = {};
 
 // ── HELPERS ─────────────────────────────────────────────────────
 function ago(minutes) {
@@ -971,10 +1018,9 @@ function showToast(title, body, duration = 3500) {
 // ── INIT ─────────────────────────────────────────────────────────
 function init() {
     STATE.channels = SEED_CHANNELS;
-    STATE.dms = SEED_DMS;
-    STATE.members = SEED_MEMBERS;
+    STATE.dms = [...SEED_DMS];
+    STATE.members = [...SEED_MEMBERS];
     Object.assign(STATE.messages, SEED_MESSAGES);
-    Object.assign(DM_MESSAGES, DM_MESSAGES);
 
     renderChannelList();
     renderDMList();
@@ -1135,17 +1181,69 @@ function renderMemberList() {
         members.forEach(m => {
             const d = document.createElement('div');
             d.className = 'member-item';
-            d.innerHTML = `
-                <div class="member-avatar" style="background:${m.color}">
-                    ${initials(m.name)}
-                    <div class="member-presence ${m.presence}"></div>
-                </div>
-                <div class="member-info">
-                    <div class="member-name${m.isBot ? ' bot' : ''}">${m.name}${m.isMe ? ' (you)' : ''}</div>
-                    ${m.building ? `<div class="member-building">⚡ ${m.building}</div>` : ''}
-                    <div class="member-role">${m.role}</div>
-                </div>
-            `;
+            d.style.alignItems = 'flex-start';
+
+            const av = document.createElement('div');
+            av.className = 'member-avatar';
+            av.style.cssText = `background:${m.color};width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;position:relative;`;
+            av.textContent = initials(m.name);
+            const pres = document.createElement('div');
+            pres.className = `member-presence ${m.presence}`;
+            av.appendChild(pres);
+
+            const info = document.createElement('div');
+            info.className = 'member-info';
+            info.style.flex = '1';
+
+            const nameEl = document.createElement('div');
+            nameEl.className = 'member-name' + (m.isBot ? ' bot' : '');
+            nameEl.textContent = m.name + (m.isMe ? ' (you)' : '');
+            info.appendChild(nameEl);
+
+            if (m.building) {
+                const bld = document.createElement('div');
+                bld.className = 'member-building';
+                bld.textContent = '⚡ ' + m.building;
+                info.appendChild(bld);
+            }
+
+            const roleEl = document.createElement('div');
+            roleEl.className = 'member-role';
+            roleEl.textContent = m.role;
+            info.appendChild(roleEl);
+
+            if (m.isBot) {
+                const botStatus = m.botStatus || 'uninitialized';
+                const statusEl = document.createElement('span');
+                statusEl.className = `bot-status ${botStatus}`;
+                const statusLabels = {
+                    uninitialized: 'Offline — not initialized',
+                    initializing:  'Initializing…',
+                    ready:         'Ready',
+                    error:         'Error'
+                };
+                statusEl.textContent = statusLabels[botStatus] || botStatus;
+                info.appendChild(statusEl);
+
+                if (m.botProgress) {
+                    const prog = document.createElement('div');
+                    prog.className = 'bot-progress';
+                    prog.textContent = m.botProgress;
+                    info.appendChild(prog);
+                }
+
+                if (botStatus !== 'ready' && botStatus !== 'initializing') {
+                    const btn = document.createElement('button');
+                    btn.className = 'bot-init-btn';
+                    btn.textContent = 'Initialize';
+                    btn.onclick = (e) => { e.stopPropagation(); initBot(m.id); };
+                    info.appendChild(btn);
+                }
+            }
+
+            d.appendChild(av);
+            d.appendChild(info);
+
             if (!m.isMe) {
                 d.onclick = () => {
                     const dmId = 'dm_' + m.id;
@@ -1160,6 +1258,375 @@ function renderMemberList() {
             el.appendChild(d);
         });
     });
+}
+
+// ── BOT MANAGEMENT ────────────────────────────────────────────────
+const BOT_COLORS = ['#1f6feb','#8b5cf6','#db6d28','#2ea043','#c9510c','#a371f7','#56d364','#58a6ff'];
+let _botColorIdx = 0;
+
+async function openAddBotModal() {
+    document.getElementById('addbot-name').value = '';
+    document.getElementById('addbot-role').value = '';
+    const sel = document.getElementById('addbot-model');
+    const hint = document.getElementById('addbot-model-hint');
+    sel.innerHTML = '';
+    hint.textContent = 'Loading available models…';
+
+    document.getElementById('addbot-modal').classList.add('open');
+
+    const models = [];
+
+    // Try Ollama
+    try {
+        const r = await fetch('http://localhost:11434/api/tags', { signal: AbortSignal.timeout(3000) });
+        if (r.ok) {
+            const data = await r.json();
+            (data.models || []).forEach(m => {
+                models.push({ id: m.name, label: m.name + ' (Ollama)', source: 'ollama', size: '' });
+            });
+        }
+    } catch {}
+
+    // MLC models
+    const mlcList = window.MLC_MODELS || [];
+    mlcList.forEach(m => {
+        models.push({ id: m.id, label: `${m.label} ${m.size} [WebGPU]`, source: 'mlc' });
+    });
+
+    // Transformers models
+    const txList = window.TRANSFORMERS_MODELS || [];
+    txList.forEach(m => {
+        models.push({ id: m.id, label: `${m.label} ${m.size} [WASM]`, source: 'transformers' });
+    });
+
+    sel.innerHTML = '';
+    models.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = JSON.stringify({ id: m.id, source: m.source });
+        opt.textContent = m.label;
+        sel.appendChild(opt);
+    });
+
+    if (models.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'No models found';
+        sel.appendChild(opt);
+        hint.textContent = 'No models available. Start Ollama or use a WebGPU/WASM model.';
+    } else {
+        const ollamaCount = models.filter(m => m.source === 'ollama').length;
+        hint.textContent = ollamaCount > 0
+            ? `${ollamaCount} Ollama model(s) found locally + WebGPU/WASM options. Multiple Ollama bots can run simultaneously. Browser (WebGPU/WASM) models: only one bot active at a time.`
+            : 'No local Ollama detected. Browser models (WebGPU/WASM) require initialization and only one model can be active at a time — initializing a new bot will unload any other browser-based bot.';
+    }
+}
+
+function addBot() {
+    const name = document.getElementById('addbot-name').value.trim();
+    const role = document.getElementById('addbot-role').value.trim() || 'AI Assistant';
+    const sel = document.getElementById('addbot-model');
+    if (!name) { showToast('Error', 'Please enter a bot name.'); return; }
+    if (!sel.value) { showToast('Error', 'Please select a model.'); return; }
+
+    let modelInfo;
+    try { modelInfo = JSON.parse(sel.value); } catch { showToast('Error', 'Invalid model selection.'); return; }
+
+    const id = 'bot_' + name.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now();
+    const color = BOT_COLORS[_botColorIdx % BOT_COLORS.length];
+    _botColorIdx++;
+
+    const bot = {
+        id,
+        name,
+        role,
+        building: '',
+        color,
+        presence: 'offline',
+        isBot: true,
+        isMe: false,
+        botStatus: 'uninitialized',
+        botModelId: modelInfo.id,
+        botModelSource: modelInfo.source,
+        botProgress: null,
+    };
+
+    STATE.members.push(bot);
+    renderMemberList();
+    closeModal('addbot-modal');
+    showToast('Bot added', `${name} added — click Initialize to load the model.`);
+}
+
+async function initBot(botId) {
+    const bot = STATE.members.find(m => m.id === botId);
+    if (!bot || !bot.isBot) return;
+
+    bot.botStatus = 'initializing';
+    bot.botProgress = 'Starting…';
+    bot.presence = 'busy';
+    renderMemberList();
+
+    try {
+        if (bot.botModelSource === 'ollama') {
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), 15000);
+            try {
+                const r = await fetch('http://localhost:11434/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: bot.botModelId, prompt: 'hi', stream: false, num_predict: 1 }),
+                    signal: ctrl.signal
+                });
+                clearTimeout(t);
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                await r.json();
+            } finally { clearTimeout(t); }
+
+            bot.botStatus = 'ready';
+            bot.botProgress = null;
+            bot.presence = 'online';
+            bot.building = bot.botModelId;
+            renderMemberList();
+            showToast(`${bot.name} ready`, `Using Ollama model: ${bot.botModelId}`);
+
+        } else if (bot.botModelSource === 'mlc') {
+            if (!window.llmFallback) throw new Error('LLM backend not loaded');
+            const mlc = window.llmFallback.mlc;
+            if (mlc.currentModel && mlc.currentModel !== bot.botModelId) {
+                await mlc.unload();
+                mlc._loadPromise = null;
+                markOtherBotsMlcStale(bot.id);
+            }
+            const onProgress = (text, pct) => {
+                bot.botProgress = text || `${Math.round((pct || 0) * 100)}%`;
+                renderMemberList();
+            };
+            await mlc.loadModel(bot.botModelId, onProgress);
+            bot.botStatus = 'ready';
+            bot.botProgress = null;
+            bot.presence = 'online';
+            bot.building = bot.botModelId;
+            renderMemberList();
+            showToast(`${bot.name} ready`, `WebGPU model loaded: ${bot.botModelId}`);
+
+        } else {
+            if (!window.llmFallback) throw new Error('LLM backend not loaded');
+            const tx = window.llmFallback.transformers;
+            if (tx.currentModel && tx.currentModel !== bot.botModelId) {
+                await tx.unload();
+                markOtherBotsTransformersStale(bot.id);
+            }
+            const onProgress = (text, pct) => {
+                bot.botProgress = text || `${Math.round((pct || 0) * 100)}%`;
+                renderMemberList();
+            };
+            await tx.loadModel(bot.botModelId, onProgress);
+            bot.botStatus = 'ready';
+            bot.botProgress = null;
+            bot.presence = 'online';
+            bot.building = bot.botModelId;
+            renderMemberList();
+            showToast(`${bot.name} ready`, `WASM model loaded: ${bot.botModelId}`);
+        }
+
+    } catch (err) {
+        bot.botStatus = 'error';
+        bot.botProgress = err.message;
+        bot.presence = 'offline';
+        renderMemberList();
+        showToast(`${bot.name} error`, err.message.slice(0, 80));
+    }
+}
+
+async function callBotInference(bot, userMsg) {
+    if (!bot || !bot.isBot || bot.botStatus !== 'ready') return null;
+
+    const systemPrompt = `You are ${bot.name}, an AI assistant in the ODT swarm. Role: ${bot.role}. Be concise and helpful.`;
+
+    try {
+        let result;
+        if (bot.botModelSource === 'ollama') {
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), 30000);
+            try {
+                const r = await fetch('http://localhost:11434/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: bot.botModelId,
+                        system: systemPrompt,
+                        prompt: userMsg,
+                        stream: false,
+                        num_predict: 400
+                    }),
+                    signal: ctrl.signal
+                });
+                clearTimeout(t);
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                const d = await r.json();
+                result = { success: true, response: d.response, source: 'ollama' };
+            } finally { clearTimeout(t); }
+
+        } else if (bot.botModelSource === 'mlc') {
+            const mlc = window.llmFallback.mlc;
+            if (mlc.currentModel !== bot.botModelId) {
+                await mlc.unload();
+                mlc._loadPromise = null;
+                await mlc.loadModel(bot.botModelId, (text) => {
+                    bot.botProgress = text;
+                    renderMemberList();
+                });
+                markOtherBotsMlcStale(bot.id);
+            }
+            result = await mlc.generate(userMsg, { system: systemPrompt });
+
+        } else {
+            const tx = window.llmFallback.transformers;
+            if (tx.currentModel !== bot.botModelId) {
+                await tx.unload();
+                await tx.loadModel(bot.botModelId, (text) => {
+                    bot.botProgress = text;
+                    renderMemberList();
+                });
+                bot.botProgress = null;
+                renderMemberList();
+                markOtherBotsTransformersStale(bot.id);
+            }
+            result = await tx.generate(userMsg, { system: systemPrompt });
+        }
+
+        return result?.response || null;
+    } catch (err) {
+        console.warn(`[Swarm] Bot ${bot.name} inference error:`, err.message);
+        bot.botStatus = 'error';
+        bot.botProgress = err.message;
+        bot.presence = 'offline';
+        renderMemberList();
+        return null;
+    }
+}
+
+function markOtherBotsMlcStale(activeBotId) {
+    STATE.members.forEach(m => {
+        if (m.isBot && m.id !== activeBotId && m.botModelSource === 'mlc' && m.botStatus === 'ready') {
+            m.botStatus = 'uninitialized';
+            m.botProgress = null;
+            m.presence = 'offline';
+            m.building = '';
+        }
+    });
+    renderMemberList();
+}
+
+function markOtherBotsTransformersStale(activeBotId) {
+    STATE.members.forEach(m => {
+        if (m.isBot && m.id !== activeBotId && m.botModelSource === 'transformers' && m.botStatus === 'ready') {
+            m.botStatus = 'uninitialized';
+            m.botProgress = null;
+            m.presence = 'offline';
+            m.building = '';
+        }
+    });
+    renderMemberList();
+}
+
+function postBotMessage(bot, text, channelId, dmId) {
+    const msg = {
+        id: Date.now() + Math.random(),
+        author: bot.name,
+        authorId: bot.id,
+        color: bot.color,
+        isBot: true,
+        time: now(),
+        type: 'message',
+        text,
+        reactions: []
+    };
+
+    if (channelId) {
+        if (!STATE.messages[channelId]) STATE.messages[channelId] = [];
+        STATE.messages[channelId].push(msg);
+        if (STATE.activeChannel === channelId) renderFeed();
+        else showToast(bot.name, text.slice(0, 60));
+    } else if (dmId) {
+        if (!DM_MESSAGES[dmId]) DM_MESSAGES[dmId] = [];
+        DM_MESSAGES[dmId].push(msg);
+        if (STATE.activeDM === dmId) renderFeed();
+        else {
+            const dm = STATE.dms.find(d => d.id === dmId);
+            if (dm) { dm.unread = (dm.unread || 0) + 1; renderDMList(); }
+            showToast(bot.name, text.slice(0, 60));
+        }
+    }
+}
+
+function postBotThinking(bot, channelId, dmId) {
+    const msg = {
+        id: 'thinking_' + bot.id,
+        author: bot.name,
+        authorId: bot.id,
+        color: bot.color,
+        isBot: true,
+        time: now(),
+        type: 'message',
+        text: '…thinking',
+        reactions: [],
+        isThinking: true
+    };
+    if (channelId) {
+        if (!STATE.messages[channelId]) STATE.messages[channelId] = [];
+        STATE.messages[channelId].push(msg);
+        if (STATE.activeChannel === channelId) renderFeed();
+    } else if (dmId) {
+        if (!DM_MESSAGES[dmId]) DM_MESSAGES[dmId] = [];
+        DM_MESSAGES[dmId].push(msg);
+        if (STATE.activeDM === dmId) renderFeed();
+    }
+    return msg.id;
+}
+
+function removeBotThinking(thinkingId, channelId, dmId) {
+    if (channelId && STATE.messages[channelId]) {
+        const idx = STATE.messages[channelId].findIndex(m => m.id === thinkingId);
+        if (idx > -1) STATE.messages[channelId].splice(idx, 1);
+    }
+    if (dmId && DM_MESSAGES[dmId]) {
+        const idx = DM_MESSAGES[dmId].findIndex(m => m.id === thinkingId);
+        if (idx > -1) DM_MESSAGES[dmId].splice(idx, 1);
+    }
+}
+
+async function routeMessageToBots(text, channelId, dmId) {
+    const readyBots = STATE.members.filter(m => m.isBot && m.botStatus === 'ready');
+    if (!readyBots.length) return;
+
+    let botsToRespond;
+
+    if (dmId) {
+        const dm = STATE.dms.find(d => d.id === dmId);
+        if (!dm) return;
+        const bot = readyBots.find(m => m.id === dm.memberId);
+        if (!bot) return;
+        botsToRespond = [bot];
+    } else {
+        const mentionedBots = readyBots.filter(bot => {
+            const namePart = bot.name.replace(/[^a-zA-Z0-9]/g, '[\\s\\S]?');
+            const pattern = new RegExp('@' + namePart, 'i');
+            return pattern.test(text);
+        });
+        if (mentionedBots.length === 0) return;
+        botsToRespond = mentionedBots;
+    }
+
+    for (const bot of botsToRespond) {
+        const thinkId = postBotThinking(bot, channelId, dmId);
+        const response = await callBotInference(bot, text);
+        removeBotThinking(thinkId, channelId, dmId);
+        if (response) {
+            postBotMessage(bot, response, channelId, dmId);
+        } else {
+            postBotMessage(bot, '(No response — model may have encountered an error.)', channelId, dmId);
+        }
+    }
 }
 
 // ── FEED ─────────────────────────────────────────────────────────
@@ -1251,7 +1718,7 @@ function renderFeedMessages(msgs) {
             body.appendChild(su);
         } else {
             const t = document.createElement('div');
-            t.className = 'msg-text';
+            t.className = 'msg-text' + (msg.isThinking ? ' thinking-msg' : '');
             t.textContent = msg.text;
             body.appendChild(t);
         }
@@ -1337,7 +1804,6 @@ function sendMessage() {
     if (STATE.activeChannel) {
         if (!STATE.messages[STATE.activeChannel]) STATE.messages[STATE.activeChannel] = [];
         STATE.messages[STATE.activeChannel].push(msg);
-        // If WS connected, broadcast
         if (STATE.ws && STATE.ws.readyState === WebSocket.OPEN) {
             STATE.ws.send(JSON.stringify({ type: 'message', channel: STATE.activeChannel, msg }));
         }
@@ -1353,6 +1819,33 @@ function sendMessage() {
     updateSendBtn();
     document.getElementById('post-type').value = 'message';
     renderFeed();
+
+    // Route to bots after rendering
+    if (STATE.activeChannel) {
+        routeMessageToBots(text, STATE.activeChannel, null);
+    } else if (STATE.activeDM) {
+        const dm = STATE.dms.find(d => d.id === STATE.activeDM);
+        if (dm && dm.isBot) {
+            const bot = STATE.members.find(m => m.id === dm.memberId);
+            if (bot && bot.isBot && bot.botStatus === 'ready') {
+                routeMessageToBots(text, null, STATE.activeDM);
+            } else if (bot && bot.isBot && bot.botStatus !== 'ready') {
+                const statusMsg = {
+                    id: Date.now(),
+                    author: bot.name,
+                    authorId: bot.id,
+                    color: bot.color,
+                    isBot: true,
+                    time: now(),
+                    type: 'message',
+                    text: `I'm not initialized yet. Click "Initialize" in the Members panel to load my model first.`,
+                    reactions: []
+                };
+                DM_MESSAGES[STATE.activeDM].push(statusMsg);
+                renderFeed();
+            }
+        }
+    }
 }
 
 // ── WEBSOCKET (stub — ready for backend) ─────────────────────────
@@ -1399,6 +1892,9 @@ function handleWSMessage(data) {
             STATE.messages[data.channel].push(data.msg);
             if (STATE.activeChannel === data.channel) renderFeed();
             else showToast(data.msg.author, data.msg.text?.slice(0,60) || 'New message');
+            if (data.msg.authorId !== 'you' && !data.msg.isBot) {
+                routeMessageToBots(data.msg.text || '', data.channel, null);
+            }
             break;
         case 'dm':
             if (!DM_MESSAGES[data.dmId]) DM_MESSAGES[data.dmId] = [];
@@ -1498,5 +1994,6 @@ function toggleMemberList() {
 // ── BOOT ─────────────────────────────────────────────────────────
 init();
 </script>
+<script src="web-llm-fallback.js"></script>
 </body>
 </html>
