@@ -1923,7 +1923,7 @@ class AgentTaskQueue {
         ${t.error  ? `<div class="at-result error">${escH(t.error)}</div>` : ''}
         ${t.status !== 'done' && t.status !== 'error' ? `<button class="at-cancel" onclick="TASKS.tasks.find(t=>t.id===${t.id})?.cancel()">✕</button>` : ''}
       </div>`;
-    }).join('') || '<div style="padding:16px;text-align:center;color:#2d3a4e;font-size:11px">No agents running.<br>Dispatch tasks from the ⊞ menu.</div>';
+    }).join('') || '<div style="padding:16px;text-align:center;color:#2d3a4e;font-size:11px">No agents running.<br><br>Use the quick buttons below ↓<br>or press <kbd style="background:#131929;border:1px solid #1e2d44;border-radius:3px;padding:1px 5px;font-size:10px">Space</kbd> to open the<br><span onclick="toggleCmdMenu()" style="color:#58a6ff;cursor:pointer;text-decoration:underline">⊞ Command Menu</span> (top-left).</div>';
   }
 
   clearDone(){
