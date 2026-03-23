@@ -715,7 +715,7 @@ button{cursor:pointer;background:none;border:none;}
       </div>
       <div id="game-frame-wrap">
         <div id="game-placeholder"><h3>◈</h3><p style="font-size:11px">▶ Run to play</p></div>
-        <iframe id="game-frame" style="display:none" sandbox="allow-scripts allow-same-origin"></iframe>
+        <iframe id="game-frame" style="display:none" sandbox="allow-scripts"></iframe>
         <canvas id="perf-hud" style="display:none;position:absolute;top:4px;right:4px;z-index:10;pointer-events:none;width:120px;height:60px"></canvas>
       </div>
       <div class="runner-info">
@@ -841,9 +841,29 @@ button{cursor:pointer;background:none;border:none;}
     <div class="modal-field"><label class="modal-label">Width (tiles)</label><input class="modal-input" id="ss-width" type="number" value="32" min="4" max="256"></div>
     <div class="modal-field"><label class="modal-label">Height (tiles)</label><input class="modal-input" id="ss-height" type="number" value="24" min="4" max="256"></div>
     <div class="modal-field"><label class="modal-label">Tile Size (px)</label><input class="modal-input" id="ss-tilesize" type="number" value="16" min="4" max="64"></div>
+    <div class="modal-field" style="align-items:flex-start;flex-direction:column;gap:4px">
+      <label class="modal-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="ss-allow-same-origin" onchange="handleSandboxToggle(this)" style="width:14px;height:14px;cursor:pointer">
+        Allow same-origin in game preview
+      </label>
+      <div style="font-size:10px;color:#4d6fa8;line-height:1.4">Off by default. Enabling allows localStorage/cookies in preview but reduces sandboxing.</div>
+    </div>
     <div class="modal-actions">
       <button class="modal-btn" onclick="closeModal('modal-scene-settings')">Cancel</button>
       <button class="modal-btn primary" onclick="applySceneSettings()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sandbox Warning Modal -->
+<div class="modal-backdrop" id="modal-sandbox-warn">
+  <div class="modal-box" style="max-width:400px">
+    <h3 style="color:#e3b341">⚠ Security Warning</h3>
+    <p style="font-size:11px;color:#c9d1d9;line-height:1.6;margin:10px 0">Enabling <strong>allow-same-origin</strong> in the game preview iframe removes an important security boundary. A malicious game script could read or write your browser's localStorage, cookies, and other same-origin data.</p>
+    <p style="font-size:11px;color:#8b949e;line-height:1.5;margin-bottom:12px">Only enable this if you trust the code running in the preview. It will be disabled again if you reload the page unless you confirm here.</p>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="cancelSandboxToggle()">Cancel — keep it safe</button>
+      <button class="modal-btn" style="background:#3d1515;border-color:#f85149;color:#f85149" onclick="confirmSandboxToggle()">I understand — enable it</button>
     </div>
   </div>
 </div>
@@ -1593,13 +1613,47 @@ function pushSceneUndo(){const l=GDS.scene.layers[GDS.scene.activeLayer];GDS.sce
 function sceneUndo(){if(!GDS.sceneUndoStack.length)return;const l=GDS.scene.layers[GDS.scene.activeLayer];GDS.sceneRedoStack.push([...l.data]);l.data=GDS.sceneUndoStack.pop();drawScene();}
 function sceneRedo(){if(!GDS.sceneRedoStack.length)return;const l=GDS.scene.layers[GDS.scene.activeLayer];GDS.sceneUndoStack.push([...l.data]);l.data=GDS.sceneRedoStack.pop();drawScene();}
 function zoomScene(d){if(d===0)GDS.sceneZoom=2;else GDS.sceneZoom=Math.max(.5,Math.min(8,GDS.sceneZoom+d*.5));document.getElementById('scene-zoom-label').textContent=Math.round(GDS.sceneZoom*100)+'%';drawScene();}
-function openSceneSettings(){openModal('modal-scene-settings');}
+function openSceneSettings(){
+  const cb=document.getElementById('ss-allow-same-origin');
+  if(cb)cb.checked=localStorage.getItem('gds_allow_same_origin')==='true';
+  openModal('modal-scene-settings');
+}
 function applySceneSettings(){
   GDS.scene.width=parseInt(document.getElementById('ss-width').value)||32;
   GDS.scene.height=parseInt(document.getElementById('ss-height').value)||24;
   GDS.scene.tileSize=parseInt(document.getElementById('ss-tilesize').value)||16;
   GDS.scene.layers.forEach(l=>{l.data=Array(GDS.scene.width*GDS.scene.height).fill(0);});
   drawScene();closeModal('modal-scene-settings');log(`Scene ${GDS.scene.width}×${GDS.scene.height}`,'ok');
+}
+function _applySandboxSetting(){
+  const allow=localStorage.getItem('gds_allow_same_origin')==='true';
+  const frame=document.getElementById('game-frame');
+  if(!frame)return;
+  frame.setAttribute('sandbox',allow?'allow-scripts allow-same-origin':'allow-scripts');
+}
+function handleSandboxToggle(cb){
+  if(cb.checked){
+    cb.checked=false;
+    openModal('modal-sandbox-warn');
+  } else {
+    localStorage.setItem('gds_allow_same_origin','false');
+    _applySandboxSetting();
+    log('Sandbox: allow-same-origin disabled','info');
+  }
+}
+function confirmSandboxToggle(){
+  localStorage.setItem('gds_allow_same_origin','true');
+  const cb=document.getElementById('ss-allow-same-origin');
+  if(cb)cb.checked=true;
+  _applySandboxSetting();
+  closeModal('modal-sandbox-warn');
+  log('Sandbox: allow-same-origin enabled','warn');
+}
+function cancelSandboxToggle(){
+  localStorage.setItem('gds_allow_same_origin','false');
+  const cb=document.getElementById('ss-allow-same-origin');
+  if(cb)cb.checked=false;
+  closeModal('modal-sandbox-warn');
 }
 function exportScene(){const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(JSON.stringify(GDS.scene,null,2));a.download='scene.json';a.click();log('Exported scene.json','ok');}
 function renderTilePalette(){
@@ -2053,6 +2107,7 @@ function boot(){
   checkAIStatus();setInterval(checkAIStatus,30000);
   if(!GDS.activeFile&&activeProject().files.length)openFile(activeProject().files[0].name);
   renderPrefabs();
+  _applySandboxSetting();
   aiSystemMsg(`Ready · ${GDS.ai.mode} mode · Space to open ⊞ menu`);
   log('ODT GameDev Suite v2 ✓','ok');
   log(`Project: ${activeProject().name} · ${activeProject().files.length} files`,'info');

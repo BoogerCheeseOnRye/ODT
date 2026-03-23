@@ -2201,7 +2201,9 @@ function confirmNewFile(){
 function newFolder(){log('Prefix filenames with "folder/" to organise — e.g. src/player.js','info');}
 function fileTemplate(name){
   const ext=name.split('.').pop();
-  return{js:'// '+name+'\n',cs:'// '+name+'\n',json:'{\n  \n}\n',html:'<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>Game</title></head>\n<body>\n<canvas id="canvas"></canvas>\n<scr'+'ipt src="main.js"></scr'+'ipt>\n
+  return{js:'// '+name+'\n',cs:'// '+name+'\n',json:'{\n  \n}\n',html:'<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8"><title>Game</title></head>\n<body>\n<canvas id="canvas"></canvas>\n<scr'+'ipt src="main.js"></scr'+'ipt>\n</body>\n</html>\n',md:'# '+name.replace('.md','')+'\n\n',glsl:'precision mediump float;\nvoid main(){\n  gl_FragColor=vec4(1.);\n}\n',css:'/* '+name+' */\n'}[ext]||'';
+}
+</script>
 <!-- ═══════════════════════════════════ SWARM HUB PANEL ═══ -->
 <div id="swarm-panel" class="sw-root" style="display:none;position:fixed;inset:0;z-index:8000;background:#0d1117;overflow:hidden;flex-direction:column;">
 <!-- TOP BAR -->
@@ -3722,8 +3724,7 @@ function toggleMemberList() {
 function _initSwarm(){ init(); }
 
 </script>
-</body>\n</html>\n',md:'# '+name.replace('.md','')+'\n\n',glsl:'precision mediump float;\nvoid main(){\n  gl_FragColor=vec4(1.);\n}\n',css:'/* '+name+' */\n'}[ext]||'';
-}
+<script>
 function deleteFile(name){
   if(!confirm('Delete '+name+'?'))return;
   const p=activeProject();p.files=p.files.filter(f=>f.name!==name);
