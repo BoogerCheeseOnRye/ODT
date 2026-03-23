@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gordon Live Interaction Injector</title>
+    <style>
+        body { font-family: Arial; background: #1a1a1a; color: #00ff00; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { text-align: center; color: #00ff00; }
+        .log { background: #0a0a0a; border: 1px solid #00ff00; padding: 15px; 
+               border-radius: 5px; height: 400px; overflow-y: auto; margin: 20px 0;
+               font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.6; }
+        .log-line { margin: 5px 0; }
+        .log-send { color: #00ff00; }
+        .log-resp { color: #ffff00; }
+        .log-err { color: #ff0000; }
+        .log-info { color: #00ccff; }
+        .controls { text-align: center; margin: 20px 0; }
+        button { background: #00ff00; color: #000; border: none; padding: 10px 20px; 
+                 border-radius: 5px; cursor: pointer; font-weight: bold; margin: 5px; }
+        button:hover { background: #00cc00; }
+        button:disabled { background: #666; cursor: not-allowed; }
+        input[type="text"] { width: 100%; padding: 10px; margin: 10px 0;
+                            background: #0a0a0a; color: #00ff00; border: 1px solid #00ff00;
+                            border-radius: 3px; }
+        .status { text-align: center; padding: 10px; margin: 10px 0;
+                 background: #1a3a1a; border-left: 3px solid #00ff00; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Gordon Live Interaction Injector</h1>
+        
+        <div class="status">
+            <p>This tool injects Gordon's messages into the open dashboard chat in real-time.</p>
+            <p>Make sure the dashboard is open in another window/tab.</p>
+        </div>
+        
+        <div class="controls">
+            <button onclick="startAutoTest()">Start Auto Test (5 messages)</button>
+            <button onclick="sendCustomMessage()">Send Custom Message</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <input type="text" id="customMessage" placeholder="Enter custom message to send...">
+        
+        <div class="log" id="log"></div>
+        
+        <div class="controls">
+            <button onclick="openDashboard()">Open Dashboard Window</button>
+            <p id="status"></p>
+        </div>
+    </div>
+
+    <script>
+        const messages = [
+            'Hello! This is Gordon from the testbench running automated tests.',
+            'I am analyzing the dashboard performance and UI responsiveness.',
+            'Testing the chat system with this live message injection.',
+            'All interactions are being logged and captured for the dataset.',
+            'Testbench complete - interaction data saved to results folder.'
+        ];
+
+        let messageIndex = 0;
+        let isRunning = false;
+        let dashboardWindow = null;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const line = document.createElement('div');
+            line.className = `log-line log-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            line.textContent = `[${timestamp}] ${message}`;
+            
+            logDiv.appendChild(line);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            log('Log cleared', 'info');
+        }
+
+        function openDashboard() {
+            dashboardWindow = window.open('file:///E:/dashboard-app/index.html', 'dashboard', 'width=1200,height=800');
+            if (dashboardWindow) {
+                log('Dashboard window opened', 'info');
+                setTimeout(() => {
+                    injectMessage('Dashboard is now open. Gordon testbench ready to send messages.');
+                }, 2000);
+            } else {
+                log('Failed to open dashboard (check popup blocker)', 'err');
+            }
+        }
+
+        function injectMessage(message, isUser = true) {
+            try {
+                if (!dashboardWindow || dashboardWindow.closed) {
+                    dashboardWindow = window.open('file:///E:/dashboard-app/index.html', 'dashboard');
+                    log('Opened dashboard window', 'info');
+                    return;
+                }
+
+                // Access dashboard's chat system
+                const chatContainer = dashboardWindow.document.getElementById('chat-responses');
+                const chatInput = dashboardWindow.document.getElementById('chat-input');
+                
+                if (!chatContainer) {
+                    log('Dashboard not fully loaded yet, retrying...', 'err');
+                    return;
+                }
+
+                // Create message element (same as dashboard does)
+                const div = dashboardWindow.document.createElement('div');
+                div.className = `response ${isUser ? 'user' : 'bot'}`;
+                
+                const label = dashboardWindow.document.createElement('div');
+                label.className = 'response-label';
+                label.textContent = isUser ? 'Gordon' : 'Dashboard';
+                
+                const content = dashboardWindow.document.createElement('div');
+                content.textContent = message;
+                
+                div.appendChild(label);
+                div.appendChild(content);
+                chatContainer.appendChild(div);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                log(`Injected: "${message.substring(0, 50)}..."`, isUser ? 'send' : 'resp');
+            }
+            catch (err) {
+                log(`Injection failed: ${err.message}`, 'err');
+            }
+        }
+
+        function sendCustomMessage() {
+            const input = document.getElementById('customMessage');
+            const msg = input.value.trim();
+            
+            if (!msg) {
+                log('Please enter a message', 'err');
+                return;
+            }
+
+            injectMessage(`[GORDON] ${msg}`, true);
+            
+            setTimeout(() => {
+                injectMessage(`Response to: "${msg.substring(0, 40)}..."`, false);
+            }, 1000);
+            
+            input.value = '';
+        }
+
+        async function startAutoTest() {
+            if (isRunning) return;
+            isRunning = true;
+            messageIndex = 0;
+
+            log('Starting auto test sequence...', 'info');
+            log('Opening dashboard if not already open...', 'info');
+
+            if (!dashboardWindow || dashboardWindow.closed) {
+                openDashboard();
+                await new Promise(resolve => setTimeout(resolve, 3000));
+            }
+
+            for (const msg of messages) {
+                log(`Sending message ${messageIndex + 1}/${messages.length}...`, 'send');
+                injectMessage(`[GORDON AUTO TEST] ${msg}`, true);
+                
+                messageIndex++;
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Simulate response
+                injectMessage(`Test message ${messageIndex} received and logged.`, false);
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
+
+            log('Auto test complete!', 'info');
+            log('All messages injected into dashboard chat.', 'info');
+            log('Check the dashboard window for live interaction.', 'info');
+            
+            isRunning = false;
+        }
+
+        // Initial log
+        window.onload = () => {
+            log('Gordon Live Interaction System Ready', 'info');
+            log('1. Click "Open Dashboard Window" to launch the dashboard', 'info');
+            log('2. Click "Start Auto Test" to inject automated test messages', 'info');
+            log('3. Or send custom messages using the input field', 'info');
+            log('All interactions will appear in the dashboard chat in real-time', 'info');
+        };
+    </script>
+</body>
+</html>

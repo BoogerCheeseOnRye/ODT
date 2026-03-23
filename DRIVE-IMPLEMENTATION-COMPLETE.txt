@@ -1,0 +1,363 @@
+# ✓ COMPLETE: Dynamic Drive Config & Deduplication System
+
+## Summary of Implementation
+
+Your TEoAAAG dashboard now has **complete drive flexibility** with **built-in deduplication tools**.
+
+### What Was Added
+
+#### 1. Setup Wizard (Visual)
+- **File:** `setup-wizard.html` (16.5 KB)
+- **Runs:** First time app loads
+- **Detects:** Available drives automatically
+- **Asks:** Which drive for models?
+- **Creates:** Directory structure
+- **Saves:** Configuration persistently
+
+#### 2. Setup API
+- **File:** `setup-wizard-api.js` (4 KB)
+- **Endpoints:** 5 API routes for setup
+- **Handles:** Drive detection, initialization, reset
+
+#### 3. Configuration Manager
+- **File:** `drive-config.js` (7.9 KB)
+- **Stores:** Config in `%USERPROFILE%\.teoaaag\`
+- **Survives:** App reinstalls
+- **Methods:** Get/set drive, paths, validate config
+
+#### 4. Drive Scanner Tool
+- **File:** `scan-drive.bat` (6.4 KB)
+- **Scans:** Entire drive for models
+- **Detects:** Duplicates by size/hash
+- **Outputs:** JSON + CSV reports
+
+#### 5. Consolidation Tool
+- **File:** `consolidate-models.bat` (6.3 KB)
+- **Moves:** All models to one location
+- **Removes:** Duplicates (keeps newest)
+- **Frees:** Disk space
+
+#### 6. Updated Backend
+- **File:** `server.js` (updated)
+- **Integrated:** Setup wizard
+- **Dynamic:** Uses configured drive
+- **Serves:** setup-wizard.html on first launch
+
+### File Summary
+
+```
+NEW FILES (5):
+├── setup-wizard.html (16.5 KB) ← Visual wizard UI
+├── setup-wizard-api.js (4 KB) ← API endpoints
+├── drive-config.js (7.9 KB) ← Config manager
+├── scan-drive.bat (6.4 KB) ← Scanner tool
+└── consolidate-models.bat (6.3 KB) ← Consolidation tool
+
+UPDATED FILES (1):
+└── server.js ← Integrated setup + dynamic paths
+
+DOCUMENTATION (1):
+└── DRIVE-CONFIG-GUIDE.md (9 KB) ← Complete guide
+```
+
+## How It Works
+
+### First Launch
+```
+User runs: node server.js
+    ↓
+Server checks: Is configured?
+    ├─ NO → Shows setup-wizard.html
+    │   ├─ Detects available drives
+    │   ├─ User selects drive
+    │   ├─ Creates X:\teoaaag-data\*
+    │   └─ Saves config to %USERPROFILE%\.teoaaag\
+    │
+    └─ YES → Shows dashboard normally
+```
+
+### Subsequent Launches
+```
+User runs: node server.js
+    ↓
+Server loads config from %USERPROFILE%\.teoaaag\config.json
+    ↓
+Uses stored drive & paths
+    ↓
+Shows dashboard immediately
+```
+
+## Key Features
+
+✓ **User selects drive** - Not hardcoded
+✓ **Auto-detects** - Shows available drives
+✓ **Visual wizard** - 4-step guided setup
+✓ **Persists** - Survives app reinstalls
+✓ **One-time setup** - Only runs on first launch
+✓ **Drive scanner** - Find models anywhere
+✓ **Deduplication** - Remove duplicate models
+✓ **Consolidation** - Move all to one place
+✓ **Space reporting** - See what's freed
+✓ **Flexible** - Works on any drive (C, D, E, etc.)
+
+## Directory Structure Created
+
+```
+X:\ (user-selected drive)
+├── teoaaag-data/
+│   ├── models/              ← All models here
+│   ├── cache/               ← Ollama cache
+│   └── ollama/              ← Ollama metadata
+│
+%USERPROFILE%/.teoaaag/
+└── config.json              ← Configuration
+```
+
+## Usage Examples
+
+### Example 1: First Time
+```
+1. Run: node server.js
+2. Setup wizard appears
+3. Click "Continue"
+4. Select drive: E:
+5. Confirm paths
+6. Dashboard loads
+✓ E:\teoaaag-data\models created
+✓ Config saved to %USERPROFILE%\.teoaaag\
+```
+
+### Example 2: Scan for Duplicates
+```
+cd E:\dashboard-appv2
+scan-drive.bat E
+
+Results:
+  Found 8 models
+  3 potential duplicates
+  Generated: E:\scan-results\*
+```
+
+### Example 3: Consolidate Models
+```
+consolidate-models.bat E E:\teoaaag-data\models
+
+Results:
+  Moved 8 models
+  Removed 3 duplicates
+  Freed 10.5 GB
+  All models now in: E:\teoaaag-data\models
+```
+
+### Example 4: Change Drive
+```
+1. Delete: %USERPROFILE%\.teoaaag\config.json
+2. Run: node server.js
+3. Setup wizard runs again
+4. Select different drive
+✓ New configuration created
+```
+
+## API Endpoints (Setup)
+
+```
+GET /api/setup/status
+→ Returns: { status: "CONFIGURED|NOT_CONFIGURED" }
+
+GET /api/setup/drives
+→ Returns: { drives: ["C", "D", "E", ...] }
+
+POST /api/setup/initialize
+Body: { drive: "E" }
+→ Returns: { success: true, config: {...} }
+
+GET /api/setup/config
+→ Returns: { configured: true, config: {...} }
+
+POST /api/setup/reset
+→ Returns: { success: true }
+```
+
+## Configuration File
+
+**Location:** `%USERPROFILE%\.teoaaag\config.json`
+
+**Example:**
+```json
+{
+  "driveLetter": "E",
+  "driveRoot": "E:\\",
+  "modelsDir": "E:\\teoaaag-data\\models",
+  "cacheDir": "E:\\teoaaag-data\\cache",
+  "ollamaDataDir": "E:\\teoaaag-data\\ollama",
+  "configuredAt": "2024-01-15T14:30:00.000Z",
+  "version": "1.0"
+}
+```
+
+## Tools Included
+
+### scan-drive.bat
+**Purpose:** Find all models on drive, detect duplicates
+
+**Usage:**
+```batch
+scan-drive.bat E        # Scan E: drive
+scan-drive.bat          # Interactive - asks for drive
+```
+
+**Output:**
+- `drive-scan-report.json` - Detailed analysis
+- `models-found.csv` - Spreadsheet format
+
+### consolidate-models.bat
+**Purpose:** Move all models to one location, remove duplicates
+
+**Usage:**
+```batch
+consolidate-models.bat E E:\teoaaag-data\models
+consolidate-models.bat                         # Interactive
+```
+
+**Process:**
+1. Finds all models
+2. Groups by name
+3. Keeps newest, deletes old
+4. Copies to target
+5. Reports results
+
+## Benefits
+
+| Benefit | How |
+|---------|-----|
+| No hardcoding | User selects drive in wizard |
+| Works anywhere | Supports C:, D:, E:, etc. |
+| Survives reinstalls | Config in user home |
+| Finds scattered models | `scan-drive.bat` tool |
+| Removes duplicates | `consolidate-models.bat` tool |
+| Frees space | Duplicate removal |
+| Easy to use | Visual setup wizard |
+| Portable | Drives/paths not embedded |
+
+## Migration Path
+
+### Scenario: Models scattered across E: drive
+
+**Step 1: Understand what you have**
+```batch
+scan-drive.bat E
+```
+→ Opens `scan-results\drive-scan-report.json`
+
+**Step 2: Consolidate**
+```batch
+consolidate-models.bat E E:\teoaaag-data\models
+```
+→ Moves all to one place, removes duplicates
+
+**Step 3: Run app**
+```batch
+node server.js
+```
+→ Setup wizard runs
+→ Select E: drive
+→ Dashboard loads with all models
+
+**Result:**
+- ✓ All models in `E:\teoaaag-data\models`
+- ✓ Old scattered files deleted
+- ✓ Disk space freed
+- ✓ App configured and ready
+
+## Testing Checklist
+
+- [ ] Run `node server.js` first time
+- [ ] Setup wizard appears
+- [ ] Drive detection works
+- [ ] User can select drive
+- [ ] Paths confirmed correctly
+- [ ] Setup completes successfully
+- [ ] Dashboard loads
+- [ ] Config saved to `%USERPROFILE%\.teoaaag\config.json`
+- [ ] Run `node server.js` again - no wizard
+- [ ] Dashboard loads immediately
+- [ ] Models scan works
+- [ ] `scan-drive.bat` finds models
+- [ ] `consolidate-models.bat` consolidates
+
+## Next Steps
+
+1. **First Launch:**
+   ```batch
+   cd E:\dashboard-appv2
+   node server.js
+   ```
+
+2. **Complete Setup Wizard:**
+   - Select your drive (e.g., E:)
+   - Confirm paths
+   - Dashboard loads
+
+3. **Optional: Consolidate Models**
+   ```batch
+   scan-drive.bat E
+   consolidate-models.bat E E:\teoaaag-data\models
+   ```
+
+4. **Done!**
+   - App works with any drive
+   - Models consolidated and deduplicated
+   - Configuration persistent across restarts
+
+## Architecture
+
+```
+┌─────────────────────────────────────────┐
+│ First Launch                            │
+│ GET / → Is configured?                 │
+├─────────────────────────────────────────┤
+│                                         │
+│ NO: Serve setup-wizard.html             │
+│   → Detect drives                       │
+│   → User selects                        │
+│   → Save to %USERPROFILE%\.teoaaag\    │
+│   → Create directories                  │
+│                                         │
+│ YES: Serve index.html (dashboard)       │
+│     Load config from %USERPROFILE%\    │
+│     Use stored paths                    │
+│                                         │
+└─────────────────────────────────────────┘
+
+┌──────────────────────────────────────────┐
+│ Tools                                   │
+├──────────────────────────────────────────┤
+│                                          │
+│ scan-drive.bat → Find models & dupes    │
+│   ↓                                      │
+│   scan-results\drive-scan-report.json   │
+│                                          │
+│ consolidate-models.bat → Consolidate    │
+│   ↓                                      │
+│   X:\teoaaag-data\models\               │
+│   (all models, no dupes)                │
+│                                          │
+└──────────────────────────────────────────┘
+```
+
+## Status: ✓ COMPLETE
+
+- [x] Setup wizard UI (setup-wizard.html)
+- [x] Setup API endpoints (setup-wizard-api.js)
+- [x] Configuration manager (drive-config.js)
+- [x] Drive scanner tool (scan-drive.bat)
+- [x] Consolidation tool (consolidate-models.bat)
+- [x] Backend integration (server.js updated)
+- [x] Documentation (DRIVE-CONFIG-GUIDE.md)
+- [x] No hardcoded paths
+- [x] Works on any drive
+- [x] Deduplication included
+- [x] Visual wizard
+- [x] Persistent configuration
+
+**The app is now drive-agnostic and includes full deduplication tools.**

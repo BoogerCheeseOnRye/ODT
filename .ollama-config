@@ -1,0 +1,17 @@
+# Ollama Configuration for TEoAAAG
+# Configure Ollama to store models in E:\models (not in default user data directory)
+# 
+# USAGE (Windows PowerShell):
+# $env:OLLAMA_MODELS = "E:\models"
+# ollama serve
+#
+# Or add to system environment variables permanently
+
+# Models directory - EXTERNAL to app
+OLLAMA_MODELS=E:\models
+
+# Keep cache separate too
+OLLAMA_CACHE=E:\cache
+
+# Disable auto-updates to prevent unwanted downloads
+OLLAMA_AUTO_UPDATE=false

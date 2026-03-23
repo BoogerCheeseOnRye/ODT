@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚠️ CRITICAL WARNING - ODT Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { 
+            width: 100%; 
+            height: 100%; 
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .warning-container {
+            width: 90%;
+            max-width: 700px;
+            background: #000;
+            border: 4px solid #ff0000;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.5), inset 0 0 20px rgba(255, 0, 0, 0.1);
+            animation: pulse-border 2s infinite;
+        }
+        
+        @keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 50px rgba(255, 0, 0, 0.5), inset 0 0 20px rgba(255, 0, 0, 0.1); }
+            50% { box-shadow: 0 0 80px rgba(255, 0, 0, 0.8), inset 0 0 30px rgba(255, 0, 0, 0.2); }
+        }
+        
+        .warning-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #ff0000;
+        }
+        
+        .warning-icon {
+            font-size: 60px;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.3; }
+        }
+        
+        .warning-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ff0000;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .warning-content {
+            color: #ffffff;
+            line-height: 1.8;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        .warning-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 0, 0, 0.05);
+            border-left: 4px solid #ff6600;
+            border-radius: 4px;
+        }
+        
+        .warning-section-title {
+            font-weight: bold;
+            color: #ff6600;
+            margin-bottom: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+        
+        .warning-section-text {
+            color: #cccccc;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .critical-box {
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid #ff0000;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            color: #ff3333;
+            font-weight: bold;
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .liability-text {
+            background: rgba(139, 0, 0, 0.2);
+            border: 2px solid #8b0000;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            color: #ffcccc;
+            font-size: 12px;
+            line-height: 1.7;
+            text-align: justify;
+        }
+        
+        .button-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .button {
+            flex: 1;
+            padding: 16px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .button-exit {
+            background: #333333;
+            color: #ff0000;
+            border: 2px solid #ff0000;
+        }
+        
+        .button-exit:hover {
+            background: #ff0000;
+            color: #000000;
+            transform: scale(1.05);
+        }
+        
+        .button-exit:active {
+            transform: scale(0.98);
+        }
+        
+        .button-proceed {
+            background: #ff0000;
+            color: #000000;
+            border: 2px solid #ff0000;
+        }
+        
+        .button-proceed:hover {
+            background: #ff3333;
+            transform: scale(1.05);
+        }
+        
+        .button-proceed:active {
+            transform: scale(0.98);
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            background: rgba(255, 0, 0, 0.05);
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .checkbox-label {
+            color: #ffcccc;
+            font-size: 13px;
+            cursor: pointer;
+            flex: 1;
+            user-select: none;
+        }
+        
+        .footer-text {
+            text-align: center;
+            color: #666666;
+            font-size: 11px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #333333;
+        }
+        
+        .warning-version {
+            text-align: center;
+            color: #999999;
+            font-size: 12px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="warning-container">
+        <div class="warning-header">
+            <div class="warning-icon">⚠️</div>
+            <div>
+                <div class="warning-title">CRITICAL WARNING</div>
+            </div>
+        </div>
+        
+        <div class="warning-version">ODT Dashboard - Automated Development Environment</div>
+        
+        <div class="critical-box">
+            THIS IS A HIGHLY AUTOMATED SYSTEM WITH AUTONOMOUS DECISION-MAKING CAPABILITIES.<br>
+            FOR TEST ENVIRONMENTS ONLY. NOT FOR PRODUCTION USE.
+        </div>
+        
+        <div class="warning-content">
+            <div class="warning-section">
+                <div class="warning-section-title">🚨 System Nature</div>
+                <div class="warning-section-text">
+                    ODT (Omni Development Terminal) Dashboard is a highly automated development system with autonomous AI model orchestration, memory management, and automated task execution capabilities. This system makes independent decisions and executes commands automatically.
+                </div>
+            </div>
+            
+            <div class="warning-section">
+                <div class="warning-section-title">🔴 Critical Limitations</div>
+                <div class="warning-section-text">
+                    • RESTRICTED TO TEST ENVIRONMENTS ONLY<br>
+                    • Do NOT use on production systems<br>
+                    • Do NOT use with sensitive data<br>
+                    • Do NOT use for critical operations<br>
+                    • Do NOT run without active monitoring<br>
+                    • Automated cleanup may unload essential components<br>
+                    • Automation engine executes without manual approval
+                </div>
+            </div>
+            
+            <div class="warning-section">
+                <div class="warning-section-title">⚡ User Responsibility</div>
+                <div class="warning-section-text">
+                    You are fully responsible for:<br>
+                    • All system actions and their consequences<br>
+                    • Data loss, corruption, or modification<br>
+                    • Resource consumption and costs<br>
+                    • Security violations or breaches<br>
+                    • Any damage caused by automation errors<br>
+                    • Memory management system changes<br>
+                    • Model orchestration decisions
+                </div>
+            </div>
+            
+            <div class="liability-text">
+                <strong>LIABILITY DISCLAIMER:</strong><br><br>
+                The developers and distributors of ODT Dashboard accept NO LIABILITY for:<br>
+                • User error or misuse of the system<br>
+                • Data loss or system damage<br>
+                • Security breaches or vulnerabilities<br>
+                • Automated action consequences<br>
+                • Memory cleanup side effects<br>
+                • Automation engine failures<br>
+                • Third-party impacts or damages<br>
+                • Any indirect, incidental, or consequential damages<br><br>
+                By proceeding, you acknowledge and accept full responsibility for all risks and consequences of using this highly automated system.
+            </div>
+            
+            <div class="warning-section">
+                <div class="warning-section-title">✅ Safety Checklist</div>
+                <div class="warning-section-text">
+                    Before proceeding, verify:<br>
+                    ☐ This is a TEST environment<br>
+                    ☐ You have full system access and control<br>
+                    ☐ You understand automation risks<br>
+                    ☐ You have proper monitoring tools active<br>
+                    ☐ You accept full responsibility for consequences<br>
+                    ☐ Ollama/LLM servers are properly configured
+                </div>
+            </div>
+        </div>
+        
+        <div class="checkbox-container">
+            <input type="checkbox" id="acknowledgement" />
+            <label for="acknowledgement" class="checkbox-label">
+                I ACKNOWLEDGE this is a test environment only and I accept full responsibility for all consequences and user errors.
+            </label>
+        </div>
+        
+        <div class="button-container">
+            <button class="button button-exit" onclick="exitApplication()">
+                ❌ EXIT - DO NOT USE
+            </button>
+            <button class="button button-proceed" id="proceedBtn" onclick="proceedToApplication()" disabled>
+                ✓ I ACCEPT - PROCEED TO DASHBOARD
+            </button>
+        </div>
+        
+        <div class="footer-text">
+            This warning must be acknowledged before each use. Automated systems require constant vigilance.
+        </div>
+    </div>
+    
+    <script>
+        // Get checkbox and button
+        const checkbox = document.getElementById('acknowledgement');
+        const proceedBtn = document.getElementById('proceedBtn');
+        
+        // Enable proceed button only if checkbox is checked
+        checkbox.addEventListener('change', function() {
+            proceedBtn.disabled = !this.checked;
+            if (this.checked) {
+                proceedBtn.style.opacity = '1';
+                proceedBtn.style.cursor = 'pointer';
+            } else {
+                proceedBtn.style.opacity = '0.5';
+                proceedBtn.style.cursor = 'not-allowed';
+            }
+        });
+        
+        // Exit application
+        function exitApplication() {
+            if (confirm('Are you sure? Close ODT warning screen?')) {
+                window.close();
+                setTimeout(() => {
+                    document.body.innerHTML = '<div style="color: #ff0000; text-align: center; padding: 50px; font-size: 20px; font-family: Arial;">ODT Dashboard Closed</div>';
+                }, 100);
+            }
+        }
+        
+        // Proceed to application
+        function proceedToApplication() {
+            if (!checkbox.checked) {
+                alert('You must acknowledge the warning to proceed.');
+                return;
+            }
+            
+            // Store acknowledgement
+            sessionStorage.setItem('odtDashboardWarningAcknowledged', 'true');
+            
+            // Redirect to main app
+            window.location.href = 'index.html';
+        }
+        
+        // Add keyboard listener
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                exitApplication();
+            }
+        });
+        
+        console.log('%c⚠️ CRITICAL WARNING ⚠️', 'color: #ff0000; font-size: 20px; font-weight: bold;');
+        console.log('%cODT Dashboard - Highly Automated, Test Environment Only', 'color: #ff6600; font-size: 14px; font-weight: bold;');
+        console.log('%cUser is fully responsible for all consequences and errors.', 'color: #ffcccc; font-size: 12px;');
+    </script>
+</body>
+</html>

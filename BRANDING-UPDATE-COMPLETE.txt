@@ -1,0 +1,90 @@
+# ✅ ODT Branding Update Complete
+
+## What Changed
+
+All references to **TEoAAAG** have been replaced with **ODT** (Omni Development Terminal).
+
+### Updated Files
+
+**UI:**
+- `index.html` - All dashboard text, database names, and references updated
+- `setup-wizard.html` - Setup wizard title and branding updated
+- Page title now shows "ODT - Omni Development Terminal"
+- Header displays "ODT" instead of "TEoAAAG"
+- Database name: `ODT_Dashboard` (was `TEoAAAG_Dashboard`)
+- IndexedDB storage updated accordingly
+
+**Configuration:**
+- `drive-config.js` - Config directory now `.odt` (was `.teoaaag`)
+- `.env` - Environment variables reference updated
+- `.ollama-config` - Documentation updated
+- Default paths now use `odt-data` folder structure (was `teoaaag-data`)
+
+**Documentation:**
+- `QUICK-START-DRIVES.txt` - Updated with ODT branding
+- All paths reference `odt-data` instead of `teoaaag-data`
+
+### Key Folder Structure (Dynamic)
+
+```
+X:\odt-data\                    (user-selected drive)
+├── models\                      ← Models here
+├── cache\                       ← Ollama cache  
+└── ollama\                      ← Ollama metadata
+
+%USERPROFILE%\.odt\             (configuration storage)
+└── config.json                  ← Persistent settings
+```
+
+### UI Terminology
+
+- Application name: **ODT** (Omni Development Terminal)
+- Storage: **odt-data**
+- Config location: **%USERPROFILE%\.odt**
+- Database: **ODT_Dashboard**
+
+### What's NOT Changed
+
+- **Functionality:** Everything works identically
+- **Drive selection:** Still dynamic (select any drive on first launch)
+- **Model management:** Deduplication tools unchanged
+- **Backend code:** Logic untouched, just variable names updated
+
+### First Launch
+
+Users now see:
+1. "ODT - Configuration Wizard" in title
+2. "Omni Development Terminal" as subtitle
+3. Drive selection interface for setup
+4. Configuration saved to `%USERPROFILE%\.odt\config.json`
+5. Models stored in `X:\odt-data\models` (where X = selected drive)
+
+### Migration Notes
+
+If users had old configuration:
+- Old config at `%USERPROFILE%\.teoaaag\config.json` will NOT be used
+- Setup wizard runs again on first launch
+- User selects drive and new config created at `%USERPROFILE%\.odt\config.json`
+
+### Environment Variables
+
+**Set before running:**
+```powershell
+# Not required - setup wizard handles this
+# But can be overridden if needed:
+$env:OLLAMA_MODELS = "C:\odt-data\models"
+$env:OLLAMA_CACHE = "C:\odt-data\cache"
+```
+
+## Status: ✅ COMPLETE
+
+All branding has been updated from TEoAAAG to ODT throughout:
+- ✅ Dashboard UI
+- ✅ Setup wizard
+- ✅ Configuration system
+- ✅ Database names
+- ✅ File paths
+- ✅ Documentation
+- ✅ Environment variables
+
+The application is now properly branded as **ODT - Omni Development Terminal**.

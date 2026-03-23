@@ -1,0 +1,254 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                   TEoAAAG MODEL ISOLATION - ARCHITECTURE                        ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ USER BROWSER                                                                    │
+│                                                                                 │
+│ ┌─────────────────────────────────────────────────────────────────────────────┐ │
+│ │ index.html (WebGL Dashboard)                                               │ │
+│ │ • Chat interface                                                          │ │
+│ │ • 3D preview                                                             │ │
+│ │ • Model manager UI                                                      │ │
+│ │ • File tree editor                                                      │ │
+│ └────────────┬────────────────────────────────────────────────────────────┘ │
+│              │                                                              │
+│              │ HTTP Requests                                               │
+│              ↓                                                              │
+└──────────────┼──────────────────────────────────────────────────────────────┘
+               │
+               │
+┌──────────────┼──────────────────────────────────────────────────────────────┐
+│ BACKEND (Node.js - proxy.js + server.js)                                   │
+│                                                                            │
+│ ┌──────────────┐  ┌─────────────────────────────────────────────────────┐ │
+│ │ /api/scan    │→ │ isValidModelPath() CHECK                            │ │
+│ │ /api/import  │  │                                                   │ │
+│ │ /api/generate│  │ IF path.startsWith(E:\dashboard-appv2)           │ │
+│ └──────────────┘  │   → REJECT (HTTP 403)                           │ │
+│                   │                                                   │ │
+│                   │ IF path.startsWith(E:\models)                   │ │
+│                   │   → ACCEPT                                      │ │
+│                   │                                                   │ │
+│                   │ ELSE                                             │ │
+│                   │   → REJECT (HTTP 403)                           │ │
+│                   └────────────┬────────────────────────────────────┘ │
+│                                │                                      │
+│                                ↓                                      │
+│                   ┌──────────────────────────┐                        │
+│                   │ Environment Variables    │                        │
+│                   │ OLLAMA_MODELS=E:\models  │                        │
+│                   │ OLLAMA_CACHE=E:\cache    │                        │
+│                   └────────────┬─────────────┘                        │
+└───────────────────────────────┼─────────────────────────────────────┘
+                                │
+                                ↓
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ OLLAMA SERVICE (localhost:11434)                                               │
+│                                                                                 │
+│ Models Directory: E:\models (NOT E:\dashboard-appv2\models)                    │
+│ Cache Directory: E:\cache                                                      │
+│                                                                                 │
+│ ┌───────────────────────────────────────┐ ┌────────────────────────────────┐  │
+│ │ Model Registry                        │ │ GGUF Files                     │  │
+│ │ • qwen2.5-7b:latest                  │ │ E:\models\                     │  │
+│ │ • mistral-7b:latest                  │ │ ├─ qwen2.5-7b.gguf           │  │
+│ │ • phi-2.7b:latest                    │ │ ├─ mistral-7b.gguf           │  │
+│ │                                       │ │ └─ phi-2.7b.gguf             │  │
+│ └───────────────────────────────────────┘ └────────────────────────────────┘  │
+│                                                                                 │
+│ Generation API                                                                 │
+│ • Receives prompts from dashboard                                             │
+│ • Uses models from E:\models                                                 │
+│ • Returns responses                                                           │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                          DIRECTORY STRUCTURE                                   ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+E:\
+│
+├─ dashboard-appv2/                    ← APPLICATION FOLDER
+│  ├─ index.html                       ✓ UI code
+│  ├─ server.js                        ✓ Backend (updated)
+│  ├─ proxy.js                         ✓ Proxy (updated)
+│  ├─ api-config.js                    ✓ API config
+│  ├─ package.json                     ✓ Dependencies
+│  │
+│  ├─ .env                             ✓ NEW: Config reference
+│  ├─ .ollama-config                   ✓ NEW: Ollama setup
+│  ├─ start-dashboard-isolated.bat     ✓ NEW: Launcher (batch)
+│  ├─ start-dashboard-isolated.ps1     ✓ NEW: Launcher (PS)
+│  │
+│  ├─ MODEL-ISOLATION-SETUP.md         ✓ NEW: Setup guide
+│  ├─ MODEL-ISOLATION-VERIFICATION.md  ✓ NEW: Tech details
+│  ├─ IMPLEMENTATION-SUMMARY.md        ✓ NEW: Overview
+│  ├─ QUICK-REFERENCE.txt              ✓ NEW: Quick start
+│  └─ COMPLETION-SUMMARY.txt           ✓ NEW: This document
+│
+│  ⚠ NO models\ subfolder              ← Models NOT allowed here
+│  ⚠ NO model files                    ← All external
+│
+├─ models/                             ← EXTERNAL MODELS (NEW)
+│  ├─ qwen2.5-7b.gguf                  ✓ Model file
+│  ├─ mistral-7b.gguf                  ✓ Model file
+│  └─ phi-2.7b.gguf                    ✓ Model file
+│
+├─ cache/                              ← OLLAMA CACHE (NEW)
+│  └─ [auto-managed]                   ✓ Cache files
+│
+└─ ollama-data/                        ← OLLAMA DATA (optional)
+   └─ [auto-managed]                   ✓ Metadata files
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                          REQUEST FLOW - EXAMPLES                               ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+1. SCAN MODELS
+   ┌─────────────────────┐
+   │ GET /api/scan       │
+   └──────────┬──────────┘
+              │
+              ↓
+   ┌──────────────────────────────────┐
+   │ isValidModelPath("E:\models")    │
+   │ → path.startsWith("E:\models")  │
+   │ → true ✓                         │
+   └──────────┬───────────────────────┘
+              │
+              ↓
+   ┌──────────────────────────────────┐
+   │ List files: E:\models\           │
+   │ • qwen2.5-7b.gguf              │
+   │ • mistral-7b.gguf              │
+   └──────────┬───────────────────────┘
+              │
+              ↓
+   ┌──────────────────────────────────┐
+   │ Response 200 OK                  │
+   │ [                                │
+   │   {name: "qwen2.5-7b", ...}    │
+   │   {name: "mistral-7b", ...}    │
+   │ ]                                │
+   └──────────────────────────────────┘
+
+2. IMPORT MODEL (VALID)
+   ┌───────────────────────────────────────┐
+   │ POST /api/import-model                │
+   │ {path: "E:\models\qwen2.5-7b.gguf"}  │
+   └────────────┬────────────────────────────┘
+                │
+                ↓
+   ┌──────────────────────────────────────────┐
+   │ isValidModelPath("E:\models\qwen...")   │
+   │ → path.startsWith("E:\models")         │
+   │ → true ✓                                │
+   └────────────┬─────────────────────────────┘
+                │
+                ↓
+   ┌──────────────────────────────────────────┐
+   │ Response 200 OK                          │
+   │ {success: true, message: "Imported"}    │
+   └──────────────────────────────────────────┘
+
+3. IMPORT MODEL (INVALID - BLOCKED)
+   ┌───────────────────────────────────────────────┐
+   │ POST /api/import-model                        │
+   │ {path: "E:\dashboard-appv2\models\fake.gguf"}│
+   └────────────┬─────────────────────────────────┘
+                │
+                ↓
+   ┌──────────────────────────────────────────────────┐
+   │ isValidModelPath("E:\dashboard-appv2\models...")│
+   │ → path.startsWith("E:\dashboard-appv2")        │
+   │ → true (BUT should be false!)                  │
+   │ → return false ✗                               │
+   └────────────┬─────────────────────────────────────┘
+                │
+                ↓
+   ┌──────────────────────────────────────────────────┐
+   │ Response 403 FORBIDDEN                           │
+   │ {error: "Model must be in E:\models"}          │
+   └──────────────────────────────────────────────────┘
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                            VALIDATION LOGIC                                    ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+isValidModelPath(filePath) {
+    const normalized = path.normalize(filePath);
+    const appNormalized = path.normalize("E:\dashboard-appv2");
+    const modelsDirNormalized = path.normalize("E:\models");
+    
+    // ❌ REJECT - Path inside app folder
+    if (normalized.startsWith(appNormalized)) {
+        console.log("BLOCKED: Path in app folder");
+        return false;  // HTTP 403
+    }
+    
+    // ✓ ACCEPT - Path inside models folder
+    if (normalized.startsWith(modelsDirNormalized)) {
+        console.log("ALLOWED: Path in models folder");
+        return true;  // Proceed
+    }
+    
+    // ❌ REJECT - Path neither in app nor models
+    console.log("BLOCKED: Path not in models folder");
+    return false;  // HTTP 403
+}
+
+Examples:
+  isValidModelPath("E:\models\qwen.gguf")              → true ✓
+  isValidModelPath("E:\models\subfolder\phi.gguf")     → true ✓
+  isValidModelPath("E:\dashboard-appv2\models\m.gguf") → false ✗
+  isValidModelPath("E:\dashboard-appv2\m.gguf")        → false ✗
+  isValidModelPath("C:\other\model.gguf")              → false ✗
+  isValidModelPath("E:\other\model.gguf")              → false ✗
+
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                          STARTUP PROCESS                                       ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+STEP 1: Set Environment (One time)
+┌─────────────────────────────────────────┐
+│ Windows Settings → Environment Variables │
+│ ADD: OLLAMA_MODELS = E:\models          │
+│ ADD: OLLAMA_CACHE = E:\cache            │
+│ SAVE & Restart                          │
+└─────────────────────────────────────────┘
+        ↓
+STEP 2: Start Ollama (Each session)
+┌─────────────────────────────────────────┐
+│ Terminal: ollama serve                  │
+│ (Reads: OLLAMA_MODELS=E:\models)        │
+│ (Uses that directory for models)        │
+└──────────────┬──────────────────────────┘
+               ↓
+STEP 3: Start Dashboard (Each session)
+┌────────────────────────────────────────────────┐
+│ Terminal: start-dashboard-isolated.bat         │
+│ • Sets OLLAMA_MODELS=E:\models               │
+│ • Sets OLLAMA_CACHE=E:\cache                 │
+│ • Creates directories if missing             │
+│ • Validates Node.js                          │
+│ • Starts server on port 8080                 │
+│ • Starts proxy on port 9001                  │
+└──────────────┬─────────────────────────────────┘
+               ↓
+STEP 4: Browse Dashboard
+┌────────────────────────────────────────────────┐
+│ Open: http://localhost:8080                   │
+│ • Chat works                                  │
+│ • Models scanned from E:\models              │
+│ • 3D preview works                            │
+│ • All features functional                     │
+└────────────────────────────────────────────────┘
+
+═════════════════════════════════════════════════════════════════════════════════
+
+RESULT: Models are EXTERNAL, App is CLEAN, System is SECURE ✓

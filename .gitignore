@@ -1,0 +1,12 @@
+# User data - never commit
+data/
+*.db
+*.log
+
+# Dependencies
+node_modules/
+.env.local
+
+# IDE
+.vscode/
+.DS_Store
