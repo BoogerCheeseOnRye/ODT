@@ -1,0 +1,11 @@
+{
+  "name": "odtv2-therepliting",
+  "version": "2.0.0",
+  "description": "ODT GameDev Suite v2 — Standalone Build",
+  "main": "start.js",
+  "scripts": {
+    "start": "node start.js",
+    "dev": "node start.js"
+  },
+  "dependencies": {}
+}
