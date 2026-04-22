@@ -1,0 +1,119 @@
+# ODT v2.0 - Quick Reference Card
+
+## ⚡ Quick Start (Copy & Paste)
+
+```
+Step 1 - Setup (first time only):
+  npm install
+
+Step 2 - Terminal A (Ollama):
+  ollama serve
+
+Step 3 - Terminal B (Proxy):
+  npm start
+
+Step 4 - Browser:
+  file:///E:/ODTV2/index.html
+```
+
+## 🎯 First Model
+
+```bash
+# Fast (recommended for first time)
+ollama pull phi:2.7b
+
+# Or larger/better
+ollama pull qwen2.5:7b
+```
+
+## 🔧 Most Used Commands
+
+| Command | What It Does |
+|---------|------------|
+| `ollama serve` | Start Ollama |
+| `ollama pull phi:2.7b` | Download model |
+| `ollama list` | See installed models |
+| `npm start` | Start proxy |
+| `npm install` | Install dependencies |
+
+## 🪟 Windows Shortcuts
+
+| File | Action |
+|------|--------|
+| `SETUP.bat` | First-time setup |
+| `START-ODT.bat` | Launch ODT |
+| `dev-env-standalone.bat` | Alternative launcher |
+
+## 💬 Keyboard Shortcuts in Dashboard
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+Enter` | Send chat message |
+| `F` | Toggle fullscreen |
+| `Ctrl+S` | Save file |
+
+## 📋 Dashboard Buttons
+
+| Icon | Function |
+|------|----------|
+| 📋 | Projects |
+| 📦 | Models |
+| 📂 | Paths |
+| ⚙️ | Settings |
+| ⚡ | Optimize |
+
+## 🆘 If Something Breaks
+
+```
+1. Check F12 console for errors
+2. Restart Ollama (Ctrl+C, then ollama serve)
+3. Restart proxy (Ctrl+C, then npm start)
+4. Refresh browser (Ctrl+R)
+5. Clear cache (Ctrl+Shift+Delete)
+6. Try different model
+```
+
+## 📊 System Check
+
+**Minimum to run:**
+- Windows 7+
+- Node.js 16+
+- Ollama installed
+- 4GB RAM
+- 5GB disk
+
+**For good performance:**
+- Windows 10+
+- 8GB+ RAM
+- 4+ cores
+- Modern GPU
+
+## 📞 Common Issues
+
+| Problem | Solution |
+|---------|----------|
+| "ollama: command not found" | Install Ollama from ollama.ai |
+| "Cannot connect to Ollama" | Run `ollama serve` |
+| "Proxy connection failed" | Run `npm start` |
+| "No models found" | Run `ollama pull phi:2.7b` |
+| Dashboard looks broken | Hard refresh: Ctrl+Shift+R |
+| Chat very slow | Try smaller model |
+
+## 📚 Documentation
+
+- **README.md** - Full documentation
+- **GETTING-STARTED.md** - Step-by-step guide
+- **This file** - Quick reference
+
+## 🚀 You're Ready!
+
+1. Run SETUP.bat
+2. Start Ollama
+3. Pull a model
+4. Open index.html
+5. Create project
+6. Start building!
+
+---
+
+**Questions?** Check README.md
